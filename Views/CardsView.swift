@@ -1,84 +1,207 @@
 import SwiftUI
 
+@MainActor
 struct CardsView: View {
 
-    var cards: [Color] = [
-        Color(red: 0.89, green: 0.49, blue: 0.36),
-        Color(red: 0.98, green: 0.76, blue: 0.44),
-        Color(red: 0.58, green: 0.82, blue: 0.62),
-        Color(red: 0.44, green: 0.72, blue: 0.84),
-        Color(red: 0.64, green: 0.56, blue: 0.87),
-    ]
-
+    @StateObject private var viewModel: CardsViewModel
     @State private var dragOffset: CGSize = .zero
-    @State private var topCardIndex: Int = 0
+    @State private var isFlipped: Bool = false
 
-    var width: CGFloat = 180
+    // MARK: - Inits
+
+    init() {
+        _viewModel = StateObject(wrappedValue: CardsViewModel())
+    }
+
+    init(viewModel: CardsViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
+    // MARK: - Body
 
     var body: some View {
-        ZStack {
-            ForEach(cards.indices, id: \.self) { index in
-                let visualIndex = (index - topCardIndex + cards.count) % cards.count
+        VStack(spacing: 16) {
+            headerView
 
-                let progress = min(abs(dragOffset.width) / 150, 1)
+            ZStack {
+                ForEach(viewModel.activeCards.indices, id: \.self) { index in
+                    cardView(at: index)
+                }
+            }
+        }
+        .padding()
+    }
 
-                let signedProgress = (dragOffset.width >= 0 ? 1 : -1) * progress
+    // MARK: - Header
 
-                RoundedRectangle(cornerRadius: 16)
-                    .frame(width: width, height: 250)
-                    .foregroundStyle(cards[index])
-                    .offset(
-                        x: visualIndex == 0 ? dragOffset.width : Double(visualIndex) * 10,
-                        y: visualIndex == 0 ? 0 : Double(visualIndex) * -4
-                    )
-                    .zIndex(Double(cards.count - visualIndex))
-                    .rotationEffect(
-                        .degrees(visualIndex == 0 ? 0 : Double(visualIndex) * 3 - progress * 3),
-                        anchor: .bottom
-                    )
-                    .scaleEffect( visualIndex == 0 ? 1.0 : visualIndex == 1
-                                ? (1.0 - Double(visualIndex) * 0.06 + progress * 0.06)
-                                : (1.0 - Double(visualIndex) * 0.06)
-                    )
-                    .offset(x: visualIndex == 0 ? 0 : Double(visualIndex) * -3)
-                    .rotation3DEffect(
-                        .degrees(
-                            (visualIndex == 0 || visualIndex == 1) ? 10 * signedProgress : 0
-                        ),
-                        axis: (0, 1, 0)
-                    )
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                dragOffset = value.translation
-                            }
-                            .onEnded { value in
-                                let threshold: CGFloat = 50
-                                let direction: CGFloat = value.translation.width > 0 ? 1 : -1
-                                let delay = direction < 0 ? 0.18 : 0.20
+    private var headerView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Memocards")
+                        .font(.headline)
 
-                                if abs(value.translation.width) > threshold {
-                                    let direction: CGFloat = value.translation.width > 0 ? 1 : -1
+                    Text("Swipe right if you’ve memorized it, left if you need to see it again.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
-                                    withAnimation(.smooth(duration: 0.2)) {
-                                        dragOffset.width = direction < 0 ? -width : width * 1.33
-                                    }
+                Spacer()
 
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                                        withAnimation(.smooth(duration: 0.5)) {
-                                            topCardIndex = (topCardIndex + 1) % cards.count
-                                            dragOffset = .zero
-                                        }
-                                    }
-                                } else {
-                                    withAnimation {
-                                        dragOffset = .zero
-                                    }
-                                }
-                            }
-                    )
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack {
+                        Circle()
+                            .frame(width: 8, height: 8)
+                        Text("Known: \(viewModel.knownCount)")
+                    }
+                    .font(.caption)
 
+                    HStack {
+                        Circle()
+                            .frame(width: 8, height: 8)
+                        Text("Review: \(viewModel.reviewCount)")
+                    }
+                    .font(.caption)
+                }
+            }
+
+            Picker("Filter", selection: $viewModel.filter) {
+                ForEach(CardsFilter.allCases) { filter in
+                    Text(filter.rawValue)
+                        .tag(filter)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    // MARK: - Subviews
+
+    private func cardView(at index: Int) -> some View {
+        let visualIndex = viewModel.visualIndex(for: index)
+        let isTopCard = (visualIndex == 0)
+
+        let progress = min(
+            abs(dragOffset.width) / viewModel.maxProgressDistance,
+            1
+        )
+
+        let signedProgress = (dragOffset.width >= 0 ? 1 : -1) * progress
+
+        let card = viewModel.activeCards[index]
+
+        return FlipCard(
+            isFlipped: Binding(
+                get: { isTopCard ? isFlipped : false },
+                set: { newValue in if isTopCard { isFlipped = newValue } }
+            ),
+            width: viewModel.cardWidth,
+            height: 250,
+            front:
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .foregroundStyle(card.color)
+
+                    VStack(spacing: 8) {
+                        Text(card.text)
+                            .font(.title2)
+                            .bold()
+                    }
+                    .padding()
+                },
+            back:
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .foregroundStyle(card.color)
+
+                    VStack(spacing: 8) {
+                        Text(card.textTranslate)
+                            .font(.title2)
+                            .bold()
+                            .foregroundStyle(.white)
+                    }
+                    .padding()
+                }
+        )
+        .frame(width: viewModel.cardWidth, height: 250)
+        .offset(
+            x: isTopCard ? dragOffset.width : Double(visualIndex) * 10,
+            y: isTopCard ? 0 : Double(visualIndex) * -4
+        )
+        .zIndex(Double(viewModel.activeCards.count - visualIndex))
+        .rotationEffect(
+            .degrees(
+                isTopCard
+                    ? 0
+                    : Double(visualIndex) * 3 - progress * 3
+            ),
+            anchor: .bottom
+        )
+        .scaleEffect(
+            isTopCard
+                ? 1.0
+                : visualIndex == 1
+                    ? (1.0 - Double(visualIndex) * 0.06 + progress * 0.06)
+                    : (1.0 - Double(visualIndex) * 0.06)
+        )
+        .offset(x: isTopCard ? 0 : Double(visualIndex) * -3)
+        .rotation3DEffect(
+            .degrees(
+                (isTopCard || visualIndex == 1)
+                    ? 10 * signedProgress
+                    : 0
+            ),
+            axis: (0, 1, 0)
+        )
+        .contentShape(Rectangle())
+        .gesture(isTopCard ? dragGesture : nil)
+    }
+
+    // MARK: - Gestures
+
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                dragOffset = value.translation
+            }
+            .onEnded { value in
+                handleDragEnded(value)
+            }
+    }
+
+    // MARK: - Interaction
+
+    private func handleDragEnded(_ value: DragGesture.Value) {
+        guard !viewModel.activeCards.isEmpty else {
+            withAnimation { dragOffset = .zero }
+            return
+        }
+
+        let direction: CGFloat = value.translation.width > 0 ? 1 : -1
+
+        if abs(value.translation.width) > viewModel.swipeThreshold {
+            let isRightSwipe = (direction > 0)
+            let delay = direction < 0 ? 0.18 : 0.20
+
+            withAnimation(.smooth(duration: 0.2)) {
+                dragOffset.width =
+                    isRightSwipe
+                    ? viewModel.cardWidth * 1.33
+                    : -viewModel.cardWidth
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.smooth(duration: 0.5)) {
+                    viewModel.registerSwipe(isRightSwipe ? .right : .left)
+                    viewModel.advanceTopCard()
+                    dragOffset = .zero
+                    isFlipped = false
+                }
+            }
+        } else {
+            withAnimation {
+                dragOffset = .zero
             }
         }
     }

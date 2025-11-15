@@ -1,0 +1,27 @@
+[
+    {
+        "id": "1",
+        "text": "apple",
+        "text_translate": "elma"
+    },
+    {
+        "id": "2",
+        "text": "book",
+        "text_translate": "kitap"
+    },
+    {
+        "id": "3",
+        "text": "car",
+        "text_translate": "araba"
+    },
+    {
+        "id": "4",
+        "text": "house",
+        "text_translate": "ev"
+    },
+    {
+        "id": "5",
+        "text": "friend",
+        "text_translate": "arkadaş"
+    }
+]

@@ -18,6 +18,7 @@ final class CardsViewModel: ObservableObject {
 
     private let cardsService: CardsServiceProtocol
     private let statusStore: CardStatusStore
+    private let haptics: HapticsServiceProtocol
 
     @Published private(set) var allCards: [MemoCard] = []
     @Published private(set) var statuses: [String: CardStatus] = [:]
@@ -38,12 +39,14 @@ final class CardsViewModel: ObservableObject {
     init(
         cardsService: CardsServiceProtocol = LocalJSONCardsService(),
         statusStore: CardStatusStore = UserDefaultsCardStatusStore(),
+        haptics: HapticsServiceProtocol = HapticsService.shared,
         cardWidth: CGFloat = 180,
         swipeThreshold: CGFloat = 50,
         maxProgressDistance: CGFloat = 150
     ) {
         self.cardsService = cardsService
         self.statusStore = statusStore
+        self.haptics = haptics
         self.cardWidth = cardWidth
         self.swipeThreshold = swipeThreshold
         self.maxProgressDistance = maxProgressDistance
@@ -85,6 +88,15 @@ final class CardsViewModel: ObservableObject {
         statuses.values.filter { $0 == .review }.count
     }
 
+    var totalCardCount: Int {
+        allCards.count
+    }
+
+    var memorizationProgress: Double {
+        guard totalCardCount > 0 else { return 0 }
+        return Double(knownCount) / Double(totalCardCount)
+    }
+
     // MARK: - Stack Helpers
     func visualIndex(for index: Int) -> Int {
         guard !activeCards.isEmpty else { return 0 }
@@ -105,8 +117,11 @@ final class CardsViewModel: ObservableObject {
         switch direction {
         case .right:
             statuses[currentCard.id] = .known
+            haptics.success()
+
         case .left:
             statuses[currentCard.id] = .review
+            haptics.review()
         }
 
         statusStore.saveStatuses(statuses)

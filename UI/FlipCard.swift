@@ -30,6 +30,9 @@ struct FlipCard<Front: View, Back: View>: View {
             withAnimation(.smooth(duration: 0.4)) {
                 isFlipped.toggle()
             }
+            Task { @MainActor in
+                HapticsService.shared.flip()
+            }
         }
     }
 }

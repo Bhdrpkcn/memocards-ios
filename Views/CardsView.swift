@@ -6,6 +6,8 @@ struct CardsView: View {
     @StateObject private var viewModel: CardsViewModel
     @State private var dragOffset: CGSize = .zero
     @State private var isFlipped: Bool = false
+    @State private var isProcessingSwipe: Bool = false
+    @State private var hasActiveSwipe: Bool = false
 
     // MARK: - Inits
     init() {
@@ -26,6 +28,7 @@ struct CardsView: View {
                     cardView(at: index)
                 }
             }
+            .disabled(isProcessingSwipe)
         }
         .padding()
     }
@@ -190,45 +193,61 @@ struct CardsView: View {
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
+                guard !isProcessingSwipe else { return }
+                guard !hasActiveSwipe else { return }
+
                 dragOffset = value.translation
+
+                if abs(value.translation.width) > viewModel.swipeThreshold {
+                    let isRightSwipe = value.translation.width > 0
+                    hasActiveSwipe = true
+                    performSwipe(isRightSwipe: isRightSwipe)
+                }
             }
             .onEnded { value in
-                handleDragEnded(value)
+
+                guard !hasActiveSwipe else { return }
+                guard !isProcessingSwipe else { return }
+
+                withAnimation(.easeOut) {
+                    dragOffset = .zero
+                }
             }
     }
 
     // MARK: - Interaction
-    private func handleDragEnded(_ value: DragGesture.Value) {
+    private func performSwipe(isRightSwipe: Bool) {
         guard !viewModel.activeCards.isEmpty else {
-            withAnimation { dragOffset = .zero }
-            return
-        }
-
-        let direction: CGFloat = value.translation.width > 0 ? 1 : -1
-
-        if abs(value.translation.width) > viewModel.swipeThreshold {
-            let isRightSwipe = (direction > 0)
-            let delay = direction < 0 ? 0.18 : 0.20
-
-            withAnimation(.smooth(duration: 0.2)) {
-                dragOffset.width =
-                    isRightSwipe
-                    ? viewModel.cardWidth * 1.33
-                    : -viewModel.cardWidth
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.smooth(duration: 0.5)) {
-                    viewModel.registerSwipe(isRightSwipe ? .right : .left)
-                    viewModel.advanceTopCard()
-                    dragOffset = .zero
-                    isFlipped = false
-                }
-            }
-        } else {
             withAnimation {
                 dragOffset = .zero
             }
+            hasActiveSwipe = false
+            return
+        }
+
+        isProcessingSwipe = true
+
+        let flyOutOffset: CGFloat =
+            isRightSwipe
+            ? viewModel.cardWidth * 1.33
+            : -viewModel.cardWidth
+
+        withAnimation(.easeOut(duration: 0.2)) {
+            dragOffset.width = flyOutOffset
+        }
+
+        let delay: TimeInterval = 0.2
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.easeInOut(duration: 0.35)) {
+                viewModel.registerSwipe(isRightSwipe ? .right : .left)
+                viewModel.advanceTopCard()
+                dragOffset = .zero
+                isFlipped = false
+            }
+
+            isProcessingSwipe = false
+            hasActiveSwipe = false
         }
     }
 }

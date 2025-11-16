@@ -22,6 +22,7 @@ final class CardsViewModel: ObservableObject {
 
     @Published private(set) var allCards: [MemoCard] = []
     @Published private(set) var statuses: [String: CardStatus] = [:]
+
     @Published var filter: CardsFilter = .all {
         didSet {
             topCardIndex = 0
@@ -62,9 +63,10 @@ final class CardsViewModel: ObservableObject {
 
         for card in cards {
             if statuses[card.id] == nil {
-                statuses[card.id] = .unknown
+                statuses[card.id] = CardStatus(kind: .unknown)
             }
         }
+
         statusStore.saveStatuses(statuses)
     }
 
@@ -74,18 +76,18 @@ final class CardsViewModel: ObservableObject {
         case .all:
             return allCards
         case .known:
-            return allCards.filter { statuses[$0.id] == .known }
+            return allCards.filter { statuses[$0.id]?.kind == .known }
         case .review:
-            return allCards.filter { statuses[$0.id] == .review }
+            return allCards.filter { statuses[$0.id]?.kind == .review }
         }
     }
 
     var knownCount: Int {
-        statuses.values.filter { $0 == .known }.count
+        statuses.values.filter { $0.kind == .known }.count
     }
 
     var reviewCount: Int {
-        statuses.values.filter { $0 == .review }.count
+        statuses.values.filter { $0.kind == .review }.count
     }
 
     var totalCardCount: Int {
@@ -113,17 +115,20 @@ final class CardsViewModel: ObservableObject {
         guard !activeCards.isEmpty else { return }
 
         let currentCard = activeCards[topCardIndex]
+        let id = currentCard.id
+
+        var status = statuses[id] ?? CardStatus(kind: .unknown)
 
         switch direction {
         case .right:
-            statuses[currentCard.id] = .known
+            status.kind = .known
             haptics.success()
-
         case .left:
-            statuses[currentCard.id] = .review
+            status.kind = .review
             haptics.review()
         }
 
+        statuses[id] = status
         statusStore.saveStatuses(statuses)
     }
 }

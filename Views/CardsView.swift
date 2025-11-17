@@ -6,9 +6,10 @@ struct CardsView: View {
     @StateObject private var viewModel: CardsViewModel
     @State private var dragOffset: CGSize = .zero
     @State private var isFlipped: Bool = false
+    @State private var isProcessingSwipe: Bool = false
+    @State private var hasActiveSwipe: Bool = false
 
     // MARK: - Inits
-
     init() {
         _viewModel = StateObject(wrappedValue: CardsViewModel())
     }
@@ -18,7 +19,6 @@ struct CardsView: View {
     }
 
     // MARK: - Body
-
     var body: some View {
         VStack(spacing: 16) {
             headerView
@@ -28,41 +28,46 @@ struct CardsView: View {
                     cardView(at: index)
                 }
             }
+            .disabled(isProcessingSwipe)
         }
         .padding()
     }
 
-    // MARK: - Header
-
     private var headerView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Memocards")
                         .font(.headline)
 
-                    Text("Swipe right if you’ve memorized it, left if you need to see it again.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text(
+                        "Swipe right if you’ve memorized it, left if you need to see it again. Tap the card to see the translation."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
-                    HStack {
-                        Circle()
-                            .frame(width: 8, height: 8)
-                        Text("Known: \(viewModel.knownCount)")
-                    }
-                    .font(.caption)
+                VStack(alignment: .trailing, spacing: 8) {
+                    progressRing
 
-                    HStack {
-                        Circle()
-                            .frame(width: 8, height: 8)
-                        Text("Review: \(viewModel.reviewCount)")
+                    VStack(alignment: .trailing, spacing: 4) {
+                        HStack {
+                            Circle()
+                                .frame(width: 6, height: 6)
+                            Text("Known: \(viewModel.knownCount)")
+                        }
+                        .font(.caption2)
+
+                        HStack {
+                            Circle()
+                                .frame(width: 6, height: 6)
+                            Text("Review: \(viewModel.reviewCount)")
+                        }
+                        .font(.caption2)
                     }
-                    .font(.caption)
                 }
             }
 
@@ -76,8 +81,34 @@ struct CardsView: View {
         }
     }
 
-    // MARK: - Subviews
+    // MARK: Progress Ring
+    private var progressRing: some View {
+        let progress = viewModel.memorizationProgress
 
+        return ZStack {
+            Circle()
+                .stroke(lineWidth: 4)
+                .opacity(0.15)
+
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(
+                    style: StrokeStyle(
+                        lineWidth: 4,
+                        lineCap: .round
+                    )
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(.easeInOut, value: progress)
+
+            Text("\(Int(progress * 100))%")
+                .font(.caption2)
+                .monospacedDigit()
+        }
+        .frame(width: 40, height: 40)
+    }
+
+    // MARK: - Subviews
     private func cardView(at index: Int) -> some View {
         let visualIndex = viewModel.visualIndex(for: index)
         let isTopCard = (visualIndex == 0)
@@ -159,50 +190,64 @@ struct CardsView: View {
     }
 
     // MARK: - Gestures
-
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
+                guard !isProcessingSwipe else { return }
+                guard !hasActiveSwipe else { return }
+
                 dragOffset = value.translation
+
+                if abs(value.translation.width) > viewModel.swipeThreshold {
+                    let isRightSwipe = value.translation.width > 0
+                    hasActiveSwipe = true
+                    performSwipe(isRightSwipe: isRightSwipe)
+                }
             }
             .onEnded { value in
-                handleDragEnded(value)
+
+                guard !hasActiveSwipe else { return }
+                guard !isProcessingSwipe else { return }
+
+                withAnimation(.easeOut) {
+                    dragOffset = .zero
+                }
             }
     }
 
     // MARK: - Interaction
-
-    private func handleDragEnded(_ value: DragGesture.Value) {
+    private func performSwipe(isRightSwipe: Bool) {
         guard !viewModel.activeCards.isEmpty else {
-            withAnimation { dragOffset = .zero }
-            return
-        }
-
-        let direction: CGFloat = value.translation.width > 0 ? 1 : -1
-
-        if abs(value.translation.width) > viewModel.swipeThreshold {
-            let isRightSwipe = (direction > 0)
-            let delay = direction < 0 ? 0.18 : 0.20
-
-            withAnimation(.smooth(duration: 0.2)) {
-                dragOffset.width =
-                    isRightSwipe
-                    ? viewModel.cardWidth * 1.33
-                    : -viewModel.cardWidth
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.smooth(duration: 0.5)) {
-                    viewModel.registerSwipe(isRightSwipe ? .right : .left)
-                    viewModel.advanceTopCard()
-                    dragOffset = .zero
-                    isFlipped = false
-                }
-            }
-        } else {
             withAnimation {
                 dragOffset = .zero
             }
+            hasActiveSwipe = false
+            return
+        }
+
+        isProcessingSwipe = true
+
+        let flyOutOffset: CGFloat =
+            isRightSwipe
+            ? viewModel.cardWidth * 1.33
+            : -viewModel.cardWidth
+
+        withAnimation(.easeOut(duration: 0.2)) {
+            dragOffset.width = flyOutOffset
+        }
+
+        let delay: TimeInterval = 0.2
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.easeInOut(duration: 0.35)) {
+                viewModel.registerSwipe(isRightSwipe ? .right : .left)
+                viewModel.advanceTopCard()
+                dragOffset = .zero
+                isFlipped = false
+            }
+
+            isProcessingSwipe = false
+            hasActiveSwipe = false
         }
     }
 }

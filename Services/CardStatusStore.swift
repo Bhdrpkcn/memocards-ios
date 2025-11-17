@@ -7,7 +7,7 @@ protocol CardStatusStore {
 
 final class UserDefaultsCardStatusStore: CardStatusStore {
 
-    private let storageKey = "memocards.cardStatuses.v1"
+    private let storageKey = "memocards.cardStatuses.v2"
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -15,23 +15,25 @@ final class UserDefaultsCardStatusStore: CardStatusStore {
     }
 
     func loadStatuses() -> [String: CardStatus] {
-        guard
-            let raw = defaults.dictionary(forKey: storageKey) as? [String: String]
-        else {
+        guard let data = defaults.data(forKey: storageKey) else {
             return [:]
         }
 
-        var result: [String: CardStatus] = [:]
-        for (id, rawValue) in raw {
-            if let status = CardStatus(rawValue: rawValue) {
-                result[id] = status
-            }
+        do {
+            let decoded = try JSONDecoder().decode([String: CardStatus].self, from: data)
+            return decoded
+        } catch {
+            print("⚠️ Failed to decode card statuses: \(error)")
+            return [:]
         }
-        return result
     }
 
     func saveStatuses(_ statuses: [String: CardStatus]) {
-        let raw = statuses.mapValues { $0.rawValue }
-        defaults.set(raw, forKey: storageKey)
+        do {
+            let data = try JSONEncoder().encode(statuses)
+            defaults.set(data, forKey: storageKey)
+        } catch {
+            print("⚠️ Failed to encode card statuses: \(error)")
+        }
     }
 }

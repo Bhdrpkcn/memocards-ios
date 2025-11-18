@@ -1,39 +1,47 @@
 import Foundation
 
 protocol CardStatusStore {
-    func loadStatuses() -> [String: CardStatus]
-    func saveStatuses(_ statuses: [String: CardStatus])
+    func loadStatuses() -> [Int: CardStatus]
+    func saveStatuses(_ statuses: [Int: CardStatus])
 }
 
 final class UserDefaultsCardStatusStore: CardStatusStore {
 
-    private let storageKey = "memocards.cardStatuses.v2"
+    private let storageKey = "memocards.cardStatuses.v1"
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
     }
 
-    func loadStatuses() -> [String: CardStatus] {
-        guard let data = defaults.data(forKey: storageKey) else {
+    func loadStatuses() -> [Int: CardStatus] {
+        guard
+            let raw = defaults.dictionary(forKey: storageKey) as? [String: String]
+        else {
             return [:]
         }
 
-        do {
-            let decoded = try JSONDecoder().decode([String: CardStatus].self, from: data)
-            return decoded
-        } catch {
-            print("⚠️ Failed to decode card statuses: \(error)")
-            return [:]
+        var result: [Int: CardStatus] = [:]
+
+        for (key, rawValue) in raw {
+            guard
+                let id = Int(key),
+                let status = CardStatus(rawValue: rawValue)
+            else {
+                continue
+            }
+
+            result[id] = status
         }
+
+        return result
     }
 
-    func saveStatuses(_ statuses: [String: CardStatus]) {
-        do {
-            let data = try JSONEncoder().encode(statuses)
-            defaults.set(data, forKey: storageKey)
-        } catch {
-            print("⚠️ Failed to encode card statuses: \(error)")
+    func saveStatuses(_ statuses: [Int: CardStatus]) {
+        let raw: [String: String] = statuses.reduce(into: [:]) { dict, element in
+            dict[String(element.key)] = element.value.rawValue
         }
+
+        defaults.set(raw, forKey: storageKey)
     }
 }

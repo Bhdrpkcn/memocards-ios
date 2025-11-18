@@ -24,9 +24,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		E021D5572EC7448600FF6A9F /* memocards.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = memocards.app; path = "/Users/bp/Desktop/Workspace/memocards-ios/build/Debug-iphoneos/memocards.app"; sourceTree = "<absolute>"; };
-		E021D5642EC7448700FF6A9F /* memocardsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = memocardsTests.xctest; path = "/Users/bp/Desktop/Workspace/memocards-ios/build/Debug-iphoneos/memocards.app/PlugIns/memocardsTests.xctest"; sourceTree = "<absolute>"; };
-		E021D56E2EC7448700FF6A9F /* memocardsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = memocardsUITests.xctest; path = "/Users/bp/Desktop/Workspace/memocards-ios/build/Debug-iphoneos/memocardsUITests-Runner.app/PlugIns/memocardsUITests.xctest"; sourceTree = "<absolute>"; };
+		E021D6802ECB2ABB00FF6A9F /* memocards.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = memocards.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E021D6812ECB2ABB00FF6A9F /* memocardsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = memocardsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E021D6822ECB2ABB00FF6A9F /* memocardsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = memocardsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -108,6 +108,9 @@
 				E021D6542EC7497700FF6A9F /* Services */,
 				E021D6502EC748A800FF6A9F /* Common */,
 				E021D6522EC748C100FF6A9F /* Resources */,
+				E021D6802ECB2ABB00FF6A9F /* memocards.app */,
+				E021D6812ECB2ABB00FF6A9F /* memocardsTests.xctest */,
+				E021D6822ECB2ABB00FF6A9F /* memocardsUITests.xctest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -140,7 +143,7 @@
 			packageProductDependencies = (
 			);
 			productName = memocards;
-			productReference = E021D5572EC7448600FF6A9F /* memocards.app */;
+			productReference = E021D6802ECB2ABB00FF6A9F /* memocards.app */;
 			productType = "com.apple.product-type.application";
 		};
 		E021D5632EC7448700FF6A9F /* memocardsTests */ = {
@@ -160,7 +163,7 @@
 			packageProductDependencies = (
 			);
 			productName = memocardsTests;
-			productReference = E021D5642EC7448700FF6A9F /* memocardsTests.xctest */;
+			productReference = E021D6812ECB2ABB00FF6A9F /* memocardsTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		E021D56D2EC7448700FF6A9F /* memocardsUITests */ = {
@@ -180,7 +183,7 @@
 			packageProductDependencies = (
 			);
 			productName = memocardsUITests;
-			productReference = E021D56E2EC7448700FF6A9F /* memocardsUITests.xctest */;
+			productReference = E021D6822ECB2ABB00FF6A9F /* memocardsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -415,6 +418,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VTN2892X6M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -442,6 +446,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VTN2892X6M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

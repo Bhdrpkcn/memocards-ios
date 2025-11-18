@@ -1,8 +1,8 @@
 import Foundation
 
 protocol CardStatusStore {
-    func loadStatuses() -> [String: CardStatus]
-    func saveStatuses(_ statuses: [String: CardStatus])
+    func loadStatuses() -> [Int: CardStatus]
+    func saveStatuses(_ statuses: [Int: CardStatus])
 }
 
 final class UserDefaultsCardStatusStore: CardStatusStore {
@@ -14,24 +14,34 @@ final class UserDefaultsCardStatusStore: CardStatusStore {
         self.defaults = defaults
     }
 
-    func loadStatuses() -> [String: CardStatus] {
+    func loadStatuses() -> [Int: CardStatus] {
         guard
             let raw = defaults.dictionary(forKey: storageKey) as? [String: String]
         else {
             return [:]
         }
 
-        var result: [String: CardStatus] = [:]
-        for (id, rawValue) in raw {
-            if let status = CardStatus(rawValue: rawValue) {
-                result[id] = status
+        var result: [Int: CardStatus] = [:]
+
+        for (key, rawValue) in raw {
+            guard
+                let id = Int(key),
+                let status = CardStatus(rawValue: rawValue)
+            else {
+                continue
             }
+
+            result[id] = status
         }
+
         return result
     }
 
-    func saveStatuses(_ statuses: [String: CardStatus]) {
-        let raw = statuses.mapValues { $0.rawValue }
+    func saveStatuses(_ statuses: [Int: CardStatus]) {
+        let raw: [String: String] = statuses.reduce(into: [:]) { dict, element in
+            dict[String(element.key)] = element.value.rawValue
+        }
+
         defaults.set(raw, forKey: storageKey)
     }
 }

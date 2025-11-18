@@ -7,6 +7,7 @@ struct LearnView: View {
 
     var body: some View {
         VStack(spacing: 20) {
+            Spacer()
 
             // MARK: - Title
             Text("Select Your Deck")
@@ -29,6 +30,7 @@ struct LearnView: View {
                 .pickerStyle(.wheel)
                 .frame(height: 150)
                 .padding(.horizontal)
+
             }
 
             // MARK: - Error
@@ -50,11 +52,13 @@ struct LearnView: View {
                     .cornerRadius(14)
                     .padding(.horizontal, 40)
             }
+            .padding(.top, 20)
             .disabled(vm.selectedDeck == nil)
 
             Spacer()
 
         }
+
         .task {
             await vm.loadDecks()
         }

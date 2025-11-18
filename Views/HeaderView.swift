@@ -24,6 +24,6 @@ struct HeaderView: View {
         .padding(.horizontal)
         .padding(.top, 12)
         .padding(.bottom, 8)
-        .background(.ultraThinMaterial) 
+        .background(.ultraThinMaterial)
     }
 }

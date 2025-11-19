@@ -3,24 +3,23 @@ import SwiftUI
 struct LearnView: View {
 
     @StateObject private var vm = LearnViewModel()
-    @State private var goToSession = false
+    let onStartSession: (Deck) -> Void
 
     var body: some View {
         VStack(spacing: 20) {
             Spacer()
 
-            // MARK: - Title
             Text("Select Your Deck")
                 .font(.title2.bold())
                 .padding(.top, 10)
 
-            // MARK: - Loading State
+            Divider()
+
             if vm.isLoading {
                 ProgressView("Loading decks...")
                     .padding(.top, 30)
             }
 
-            // MARK: - Deck Picker
             if !vm.decks.isEmpty {
                 Picker("Deck", selection: $vm.selectedDeck) {
                     ForEach(vm.decks, id: \.id) { deck in
@@ -29,19 +28,18 @@ struct LearnView: View {
                 }
                 .pickerStyle(.wheel)
                 .frame(height: 150)
-                .padding(.horizontal)
 
             }
 
-            // MARK: - Error
             if let error = vm.errorMessage {
                 Text(error)
                     .foregroundColor(.red)
             }
 
-            // MARK: - Start Button
             Button {
-                goToSession = true
+                if let deck = vm.selectedDeck {
+                    onStartSession(deck)
+                }
             } label: {
                 Text("Start")
                     .font(.headline)
@@ -52,7 +50,6 @@ struct LearnView: View {
                     .cornerRadius(14)
                     .padding(.horizontal, 40)
             }
-            .padding(.top, 20)
             .disabled(vm.selectedDeck == nil)
 
             Spacer()
@@ -61,11 +58,6 @@ struct LearnView: View {
 
         .task {
             await vm.loadDecks()
-        }
-        .navigationDestination(isPresented: $goToSession) {
-            if let deck = vm.selectedDeck {
-                CardDeckView(deck: deck)
-            }
         }
     }
 }

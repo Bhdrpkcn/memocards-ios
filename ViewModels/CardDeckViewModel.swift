@@ -51,4 +51,18 @@ final class CardDeckViewModel: ObservableObject {
         guard !cards.isEmpty else { return }
         cards.removeLast()
     }
+
+    // MARK: - Swipe intents
+
+    func markKnown(_ card: MemoCard) {
+        // TODO: hook to backend: statusKind = .known
+    }
+
+    func markReview(_ card: MemoCard) {
+        // TODO: hook to backend: statusKind = .review
+    }
+
+    func storeCard(_ card: MemoCard) {
+        // TODO: hook to backend or local storage:
+    }
 }

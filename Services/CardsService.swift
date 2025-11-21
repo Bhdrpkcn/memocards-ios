@@ -22,6 +22,7 @@ final class CardService {
         }
 
         let dtos = try await APIConfig.client.request([CardDTO].self, path)
+
         return dtos.enumerated().map { idx, dto in
             MemoCard(from: dto, color: colorForIndex(idx))
         }

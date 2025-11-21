@@ -28,8 +28,19 @@ final class APIClient {
         headers: [String: String] = [:],
         body: (any Encodable)? = nil
     ) async throws -> T {
-        var url = baseURL
-        url.append(path: path.trimmingCharacters(in: .init(charactersIn: "/")))
+        let trimmed = path.trimmingCharacters(in: .init(charactersIn: "/"))
+
+        let url: URL
+        if trimmed.contains("?") {
+            guard let fullURL = URL(string: trimmed, relativeTo: baseURL) else {
+                throw URLError(.badURL)
+            }
+            url = fullURL
+        } else {
+            var tmp = baseURL
+            tmp.append(path: trimmed)
+            url = tmp
+        }
 
         var req = URLRequest(url: url)
         req.httpMethod = method.rawValue
@@ -50,6 +61,7 @@ final class APIClient {
 
         return try decoder.decode(T.self, from: data)
     }
+
 }
 
 private struct AnyEncodable: Encodable {

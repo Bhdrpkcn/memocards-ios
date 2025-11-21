@@ -5,6 +5,7 @@ enum CardStatusKind: String, Codable {
     case unknown
     case known
     case review
+    case custom
 }
 
 struct CardStatus: Codable {

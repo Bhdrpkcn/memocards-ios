@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var isInSession = false
     @State private var selectedTab: Tab = .learn
     @State private var activeDeck: Deck?
+    @State private var activeFilter: CardSessionFilter = .all
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,14 +26,13 @@ struct ContentView: View {
                 switch selectedTab {
                 case .learn:
                     if let deck = activeDeck, isInSession {
-                        CardDeckView(deck: deck)
+                        CardDeckView(deck: deck, filter: activeFilter, userId: 1)
                     } else {
-                        LearnView(
-                            onStartSession: { deck in
-                                activeDeck = deck
-                                isInSession = true
-                            }
-                        )
+                        LearnView { deck, filter in
+                            activeDeck = deck
+                            activeFilter = filter
+                            isInSession = true
+                        }
                     }
 
                 case .exercise:

@@ -3,7 +3,9 @@ import SwiftUI
 struct LearnView: View {
 
     @StateObject private var vm = LearnViewModel()
-    let onStartSession: (Deck) -> Void
+    @State private var selectedFilter: CardSessionFilter = .all
+
+    let onStartSession: (Deck, CardSessionFilter) -> Void
 
     var body: some View {
         VStack(spacing: 20) {
@@ -36,9 +38,18 @@ struct LearnView: View {
                     .foregroundColor(.red)
             }
 
+            HStack(spacing: 22) {
+                filterItem(icon: "circle.grid.3x3", label: "All", type: .all)
+                filterItem(icon: "checkmark.seal.fill", label: "Known", type: .known)
+                filterItem(icon: "arrow.triangle.2.circlepath", label: "Review", type: .review)
+                filterItem(icon: "star.fill", label: "Custom", type: .custom)
+            }
+            .padding(.top, 12)
+
             Button {
                 if let deck = vm.selectedDeck {
-                    onStartSession(deck)
+                    onStartSession(deck, selectedFilter)
+
                 }
             } label: {
                 Text("Start")
@@ -60,4 +71,21 @@ struct LearnView: View {
             await vm.loadDecks()
         }
     }
+
+    @ViewBuilder
+    private func filterItem(icon: String, label: String, type: CardSessionFilter) -> some View {
+        Button {
+            selectedFilter = type
+        } label: {
+            VStack {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .bold))
+                Text(label)
+                    .font(.caption2)
+            }
+            .foregroundColor(selectedFilter == type ? .blue : .gray)
+            .padding(6)
+        }
+    }
+
 }

@@ -2,17 +2,28 @@ import Foundation
 
 @MainActor
 final class CardDeckViewModel: ObservableObject {
-
     @Published var cards: [MemoCard] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
     let deck: Deck
-    private let cardService: CardService
+    let filter: CardSessionFilter
 
-    init(deck: Deck, cardService: CardService = CardService()) {
+    private let cardService: CardService
+    private let progressService: ProgressService
+    private let userId: Int
+
+    init(
+        deck: Deck,
+        filter: CardSessionFilter,
+        userId: Int,
+        cardService: CardService = CardService()
+    ) {
         self.deck = deck
+        self.filter = filter
+        self.userId = userId
         self.cardService = cardService
+        self.progressService = ProgressService(userId: userId)
     }
 
     var topCard: MemoCard? {
@@ -38,7 +49,11 @@ final class CardDeckViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let fetched = try await cardService.fetchCards(deckId: deck.id)
+            let fetched = try await cardService.fetchCards(
+                deckId: deck.id,
+                filter: filter,
+                userId: userId
+            )
             self.cards = fetched
         } catch {
             self.errorMessage = error.localizedDescription
@@ -52,17 +67,30 @@ final class CardDeckViewModel: ObservableObject {
         cards.removeLast()
     }
 
-    // MARK: - Swipe intents
+    // MARK: - Swipe actions
+
+    private func removeCard(_ card: MemoCard) {
+        cards.removeAll { $0.id == card.id }
+    }
 
     func markKnown(_ card: MemoCard) {
-        // TODO: hook to backend: statusKind = .known
+        removeCard(card)
+        Task {
+            try? await progressService.updateStatus(cardId: card.id, status: .known)
+        }
     }
 
     func markReview(_ card: MemoCard) {
-        // TODO: hook to backend: statusKind = .review
+        removeCard(card)
+        Task {
+            try? await progressService.updateStatus(cardId: card.id, status: .review)
+        }
     }
 
     func storeCard(_ card: MemoCard) {
-        // TODO: hook to backend or local storage:
+        removeCard(card)
+        Task {
+            try? await progressService.updateStatus(cardId: card.id, status: .custom)
+        }
     }
 }

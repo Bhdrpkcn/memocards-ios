@@ -7,7 +7,6 @@ protocol CardStatusStore {
 
 final class UserDefaultsCardStatusStore: CardStatusStore {
 
-    // bumped to v2 since format changed from String→JSON blob
     private let storageKey = "memocards.cardStatuses.v2"
     private let defaults: UserDefaults
 

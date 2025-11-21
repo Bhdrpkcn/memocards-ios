@@ -3,15 +3,25 @@ import SwiftUI
 struct CardDeckView: View {
 
     let deck: Deck
+    let filter: CardSessionFilter
+    let userId: Int
 
     @StateObject private var vm: CardDeckViewModel
 
     @State private var isFlipped = false
     @State private var dragOffset: CGSize = .zero
 
-    init(deck: Deck) {
+    init(deck: Deck, filter: CardSessionFilter, userId: Int) {
         self.deck = deck
-        _vm = StateObject(wrappedValue: CardDeckViewModel(deck: deck))
+        self.filter = filter
+        self.userId = userId
+        _vm = StateObject(
+            wrappedValue: CardDeckViewModel(
+                deck: deck,
+                filter: filter,
+                userId: userId
+            )
+        )
     }
 
     var body: some View {
@@ -64,7 +74,6 @@ struct CardDeckView: View {
                     .padding(.bottom, 8)
                     .multilineTextAlignment(.center)
                     .allowsHitTesting(false)
-
             }
             .padding(.horizontal)
             .task {
@@ -174,7 +183,6 @@ struct CardDeckView: View {
             isFlipped = false
             dragOffset = .zero
             vm.markKnown(card)
-            vm.removeTopCard()
         }
     }
 
@@ -192,7 +200,6 @@ struct CardDeckView: View {
             isFlipped = false
             dragOffset = .zero
             vm.markReview(card)
-            vm.removeTopCard()
         }
     }
 
@@ -210,12 +217,12 @@ struct CardDeckView: View {
             isFlipped = false
             dragOffset = .zero
             vm.storeCard(card)
-            vm.removeTopCard()
         }
     }
 
     // MARK: - Swipe label helper
-    private func swipeLabel(text: String, color: Color, alignment: HorizontalAlignment) -> some View {
+    private func swipeLabel(text: String, color: Color, alignment: HorizontalAlignment) -> some View
+    {
         Text(text)
             .font(.title2.bold())
             .padding(.horizontal, 16)

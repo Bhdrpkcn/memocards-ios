@@ -34,3 +34,4 @@ final class HapticsService: HapticsServiceProtocol {
         softImpactGenerator.impactOccurred()
     }
 }
+

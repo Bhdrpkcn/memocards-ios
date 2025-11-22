@@ -1,11 +1,9 @@
-
 import Foundation
 
 enum CardSessionFilter: String, Codable {
     case all
     case known
     case review
-    case custom
 
     var backendStatusParam: String? {
         switch self {
@@ -15,8 +13,6 @@ enum CardSessionFilter: String, Codable {
             return "known"
         case .review:
             return "review"
-        case .custom:
-            return "custom"
         }
     }
 }

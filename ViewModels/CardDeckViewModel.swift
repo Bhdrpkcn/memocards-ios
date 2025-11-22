@@ -90,7 +90,8 @@ final class CardDeckViewModel: ObservableObject {
     func storeCard(_ card: MemoCard) {
         removeCard(card)
         Task {
-            try? await progressService.updateStatus(cardId: card.id, status: .custom)
+            //TODO: will be turned into save to a custom deck
+//            try? await progressService.updateStatus(cardId: card.id, status: .custom)
         }
     }
 }

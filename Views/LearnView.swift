@@ -42,7 +42,6 @@ struct LearnView: View {
                 filterItem(icon: "circle.grid.3x3", label: "All", type: .all)
                 filterItem(icon: "checkmark.seal.fill", label: "Known", type: .known)
                 filterItem(icon: "arrow.triangle.2.circlepath", label: "Review", type: .review)
-                filterItem(icon: "star.fill", label: "Custom", type: .custom)
             }
             .padding(.top, 12)
 

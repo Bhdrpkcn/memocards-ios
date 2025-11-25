@@ -6,24 +6,31 @@ final class CardDeckViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    @Published var customDecks: [Deck] = []
+    @Published var isLoadingCustomDecks = false
+    @Published var customDeckError: String?
+
     let deck: Deck
     let filter: CardSessionFilter
 
     private let cardService: CardService
     private let progressService: ProgressService
+    private let customDeckService: CustomDeckService
     private let userId: Int
 
     init(
         deck: Deck,
         filter: CardSessionFilter,
         userId: Int,
-        cardService: CardService = CardService()
+        cardService: CardService = CardService(),
+        customDeckService: CustomDeckService = CustomDeckService()
     ) {
         self.deck = deck
         self.filter = filter
         self.userId = userId
         self.cardService = cardService
         self.progressService = ProgressService(userId: userId)
+        self.customDeckService = customDeckService
     }
 
     var topCard: MemoCard? {
@@ -67,9 +74,67 @@ final class CardDeckViewModel: ObservableObject {
         cards.removeLast()
     }
 
-    // MARK: - Swipe actions
+    // MARK: - Custom decks
+    func loadCustomDecksIfNeeded() async {
+        // Only relevant when browsing a base deck; for custom decks we can skip
+        if deck.isCustom { return }
 
-    private func removeCard(_ card: MemoCard) {
+        isLoadingCustomDecks = true
+        customDeckError = nil
+
+        do {
+            let decks = try await customDeckService.fetchCustomDecks(
+                parentDeckId: deck.id,
+                userId: userId
+            )
+            self.customDecks = decks
+        } catch {
+            self.customDeckError = error.localizedDescription
+        }
+
+        isLoadingCustomDecks = false
+    }
+
+    func addCard(_ card: MemoCard, to customDeck: Deck) async throws {
+        try await customDeckService.addCard(
+            to: customDeck.id,
+            from: card.id,
+            userId: userId
+        )
+        removeCard(card)
+    }
+
+    func createCustomDeckAndAddCard(
+        name: String,
+        card: MemoCard
+    ) async throws {
+        let deck = try await customDeckService.createCustomDeck(
+            parentDeckId: self.deck.id,
+            userId: userId,
+            name: name
+        )
+
+        // Update local list so UI sees the new deck
+        customDecks.append(deck)
+
+        try await customDeckService.addCard(
+            to: deck.id,
+            from: card.id,
+            userId: userId
+        )
+        removeCard(card)
+    }
+
+    func deleteCustomDeck(_ deck: Deck) async throws {
+        try await customDeckService.deleteCustomDeck(
+            customDeckId: deck.id,
+            userId: userId
+        )
+        customDecks.removeAll { $0.id == deck.id }
+    }
+
+    // MARK: - Swipe actions
+    func removeCard(_ card: MemoCard) {
         cards.removeAll { $0.id == card.id }
     }
 
@@ -91,7 +156,7 @@ final class CardDeckViewModel: ObservableObject {
         removeCard(card)
         Task {
             //TODO: will be turned into save to a custom deck
-//            try? await progressService.updateStatus(cardId: card.id, status: .custom)
+            //            try? await progressService.updateStatus(cardId: card.id, status: .custom)
         }
     }
 }

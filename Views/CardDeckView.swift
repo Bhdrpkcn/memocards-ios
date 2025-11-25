@@ -11,6 +11,16 @@ struct CardDeckView: View {
     @State private var isFlipped = false
     @State private var dragOffset: CGSize = .zero
 
+    // Custom deck state
+    @State private var pendingCardToSave: MemoCard?
+    @State private var newDeckName: String = ""
+
+    // Overlay + sheet
+    @State private var showDeckChoiceOverlay = false
+    @State private var showCustomDeckSheet = false
+    @State private var isSavingToDeck = false
+    @State private var sheetErrorMessage: String?
+
     init(deck: Deck, filter: CardSessionFilter, userId: Int) {
         self.deck = deck
         self.filter = filter
@@ -28,56 +38,73 @@ struct CardDeckView: View {
         GeometryReader { geo in
             let cardAreaHeight = geo.size.height * 0.70
 
-            VStack(spacing: 16) {
+            ZStack {
+                VStack(spacing: 16) {
 
-                Spacer()
+                    Spacer()
 
-                // MARK: - Deck header
-                VStack(spacing: 4) {
-                    Text(deck.name)
-                        .font(.title2.bold())
-                    if let description = deck.description {
-                        Text(description)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                }
-                .padding(.top, 12)
-
-                Divider()
-
-                // MARK: - Body
-                ZStack {
-                    if vm.isLoading {
-                        ProgressView("Loading cards…")
-                    } else if let top = vm.topCard {
-                        cardStack(topCard: top, height: cardAreaHeight)
-                    } else {
-                        VStack(spacing: 12) {
-                            Text("No more cards 🎉")
-                                .font(.title3.bold())
-                            Text("You’ve finished this deck.")
+                    // MARK: - Deck header
+                    VStack(spacing: 4) {
+                        Text(deck.name)
+                            .font(.title2.bold())
+                        if let description = deck.description {
+                            Text(description)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
                         }
                     }
+                    .padding(.top, 12)
+
+                    Divider()
+
+                    // MARK: - Body
+                    ZStack {
+                        if vm.isLoading {
+                            ProgressView("Loading cards…")
+                        } else if let top = vm.topCard {
+                            cardStack(topCard: top, height: cardAreaHeight)
+                        } else {
+                            VStack(spacing: 12) {
+                                Text("No more cards 🎉")
+                                    .font(.title3.bold())
+                                Text("You’ve finished this deck.")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: cardAreaHeight)
+
+                    Spacer()
+
+                    Text("Swipe right = know, left = review, down = save to a deck")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 8)
+                        .multilineTextAlignment(.center)
+                        .allowsHitTesting(false)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: cardAreaHeight)
+                .padding(.horizontal)
 
-                Spacer()
-
-                Text("Swipe right = know, left = review, down = save to your deck")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 8)
-                    .multilineTextAlignment(.center)
-                    .allowsHitTesting(false)
+                if showDeckChoiceOverlay {
+                    deckChoiceOverlay()
+                }
             }
-            .padding(.horizontal)
             .task {
                 await vm.loadCards()
+                await vm.loadCustomDecksIfNeeded()
+            }
+            .sheet(isPresented: $showCustomDeckSheet) {
+                CustomDeckSheet(
+                    vm: vm,
+                    pendingCard: $pendingCardToSave,
+                    isPresented: $showCustomDeckSheet,
+                    newDeckName: $newDeckName,
+                    isSavingToDeck: $isSavingToDeck,
+                    sheetErrorMessage: $sheetErrorMessage
+                )
             }
         }
     }
@@ -123,7 +150,7 @@ struct CardDeckView: View {
                 }
                 .animation(.spring(), value: dragOffset)
 
-                // MARK: Swipe feedback overlays
+                // Labels…
                 .overlay(alignment: .topTrailing) {
                     if dragOffset.width > 0 {
                         swipeLabel(text: "I understand", color: .green, alignment: .trailing)
@@ -142,7 +169,7 @@ struct CardDeckView: View {
                 }
                 .overlay(alignment: .bottom) {
                     if dragOffset.height > 0 {
-                        swipeLabel(text: "Save to My Deck", color: .blue, alignment: .center)
+                        swipeLabel(text: "Save to Deck", color: .blue, alignment: .center)
                             .opacity(min(Double(dragOffset.height / 120), 1.0))
                             .padding(.bottom, 24)
                     }
@@ -216,13 +243,104 @@ struct CardDeckView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             isFlipped = false
             dragOffset = .zero
-            vm.storeCard(card)
+            pendingCardToSave = card
+            showDeckChoiceOverlay = true
         }
     }
 
+    // MARK: - Deck choice overlay
+    @ViewBuilder
+    private func deckChoiceOverlay() -> some View {
+        ZStack {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    cancelDeckChoice()
+                }
+
+            VStack(spacing: 16) {
+                VStack(spacing: 8) {
+                    Text("Save to Deck")
+                        .font(.headline)
+                    Text("Choose how you want to save this card.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.bottom, 4)
+
+                Button {
+                    openSheetForAddToExisting()
+                } label: {
+                    Text("Add to a Deck")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(vm.customDecks.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                }
+                .disabled(vm.customDecks.isEmpty)
+
+                Button {
+                    openSheetForCreateDeck()
+                } label: {
+                    Text("Create a Deck to Add")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                }
+
+                Button {
+                    cancelDeckChoice()
+                } label: {
+                    Text("Cancel")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white.opacity(0.9))
+                        .foregroundColor(.red)
+                        .cornerRadius(14)
+                }
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+            )
+            .padding(.horizontal, 32)
+        }
+        .transition(.opacity.combined(with: .scale))
+    }
+
+    private func openSheetForAddToExisting() {
+        guard pendingCardToSave != nil else {
+            showDeckChoiceOverlay = false
+            return
+        }
+        showDeckChoiceOverlay = false
+        showCustomDeckSheet = true
+    }
+
+    private func openSheetForCreateDeck() {
+        guard pendingCardToSave != nil else {
+            showDeckChoiceOverlay = false
+            return
+        }
+        newDeckName = ""
+        showDeckChoiceOverlay = false
+        showCustomDeckSheet = true
+    }
+
+    private func cancelDeckChoice() {
+        showDeckChoiceOverlay = false
+        pendingCardToSave = nil
+    }
+
     // MARK: - Swipe label helper
-    private func swipeLabel(text: String, color: Color, alignment: HorizontalAlignment) -> some View
-    {
+    private func swipeLabel(text: String, color: Color, alignment: HorizontalAlignment) -> some View {
         Text(text)
             .font(.title2.bold())
             .padding(.horizontal, 16)
@@ -250,3 +368,146 @@ struct CardDeckView: View {
         }
     }
 }
+
+
+    private struct CustomDeckSheet: View {
+
+        @ObservedObject var vm: CardDeckViewModel
+
+        @Binding var pendingCard: MemoCard?
+        @Binding var isPresented: Bool
+        @Binding var newDeckName: String
+        @Binding var isSavingToDeck: Bool
+        @Binding var sheetErrorMessage: String?
+
+        var body: some View {
+            NavigationView {
+                List {
+                    if vm.isLoadingCustomDecks {
+                        Section {
+                            HStack {
+                                ProgressView()
+                                Text("Loading custom decks…")
+                            }
+                        }
+                    } else {
+                        if !vm.customDecks.isEmpty {
+                            Section("Choose a deck") {
+                                ForEach(vm.customDecks, id: \.id) { deck in
+                                    Button {
+                                        addToExisting(deck: deck)
+                                    } label: {
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(deck.name)
+                                                    .font(.headline)
+                                                Text("\(deck.cardCount) cards")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            Spacer()
+                                        }
+                                    }
+                                    .disabled(isSavingToDeck || pendingCard == nil)
+                                    .swipeActions {
+                                        Button(role: .destructive) {
+                                            Task {
+                                                await deleteDeck(deck)
+                                            }
+                                        } label: {
+                                            Text("Delete")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Section("Create new deck") {
+                            TextField("Deck name", text: $newDeckName)
+                            Button {
+                                createAndSave()
+                            } label: {
+                                if isSavingToDeck {
+                                    ProgressView()
+                                } else {
+                                    Text("Create & Save")
+                                }
+                            }
+                            .disabled(
+                                isSavingToDeck || pendingCard == nil
+                                    || newDeckName.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        .isEmpty
+                            )
+                        }
+
+                        if let error = sheetErrorMessage {
+                            Section {
+                                Text(error)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    }
+                }
+                .task {
+                    await vm.loadCustomDecksIfNeeded()
+                }
+                .navigationTitle("Save to custom deck")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            isPresented = false
+                        }
+                    }
+                }
+            }
+        }
+
+        private func addToExisting(deck: Deck) {
+            guard let card = pendingCard else { return }
+            isSavingToDeck = true
+            sheetErrorMessage = nil
+
+            Task {
+                do {
+                    try await vm.addCard(card, to: deck)
+                    pendingCard = nil
+                    isPresented = false
+                } catch {
+                    sheetErrorMessage = error.localizedDescription
+                }
+                isSavingToDeck = false
+            }
+        }
+
+        private func createAndSave() {
+            guard let card = pendingCard else { return }
+            let name = newDeckName.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return }
+
+            isSavingToDeck = true
+            sheetErrorMessage = nil
+
+            Task {
+                do {
+                    try await vm.createCustomDeckAndAddCard(name: name, card: card)
+                    pendingCard = nil
+                    isPresented = false
+                    newDeckName = ""
+                } catch {
+                    sheetErrorMessage = error.localizedDescription
+                }
+                isSavingToDeck = false
+            }
+        }
+
+        private func deleteDeck(_ deck: Deck) async {
+            isSavingToDeck = true
+            sheetErrorMessage = nil
+            do {
+                try await vm.deleteCustomDeck(deck)
+            } catch {
+                sheetErrorMessage = error.localizedDescription
+            }
+            isSavingToDeck = false
+        }
+    }

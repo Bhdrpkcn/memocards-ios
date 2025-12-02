@@ -15,7 +15,7 @@ final class CardDeckViewModel: ObservableObject {
 
     private let cardService: CardService
     private let progressService: ProgressService
-    private let customDeckService: CustomDeckService
+    private let collectionsService: CollectionsService
     private let userId: Int
 
     init(
@@ -23,14 +23,14 @@ final class CardDeckViewModel: ObservableObject {
         filter: CardSessionFilter,
         userId: Int,
         cardService: CardService = CardService(),
-        customDeckService: CustomDeckService = CustomDeckService()
+        collectionsService: CollectionsService = CollectionsService()
     ) {
         self.deck = deck
         self.filter = filter
         self.userId = userId
         self.cardService = cardService
         self.progressService = ProgressService(userId: userId)
-        self.customDeckService = customDeckService
+        self.collectionsService = collectionsService
     }
 
     var topCard: MemoCard? {
@@ -57,9 +57,9 @@ final class CardDeckViewModel: ObservableObject {
 
         do {
             let fetched = try await cardService.fetchCards(
-                deckId: deck.id,
-                filter: filter,
-                userId: userId
+                wordSetId: deck.id,
+                fromLanguageCode: deck.fromLanguageCode,
+                toLanguageCode: deck.toLanguageCode
             )
             self.cards = fetched
         } catch {
@@ -76,16 +76,15 @@ final class CardDeckViewModel: ObservableObject {
 
     // MARK: - Custom decks
     func loadCustomDecksIfNeeded() async {
-        // Only relevant when browsing a base deck; for custom decks we can skip
         if deck.isCustom { return }
 
         isLoadingCustomDecks = true
         customDeckError = nil
 
         do {
-            let decks = try await customDeckService.fetchCustomDecks(
-                parentDeckId: deck.id,
-                userId: userId
+            let decks = try await collectionsService.fetchCollections(
+                userId: userId,
+                toLanguageCode: deck.toLanguageCode
             )
             self.customDecks = decks
         } catch {
@@ -96,9 +95,9 @@ final class CardDeckViewModel: ObservableObject {
     }
 
     func addCard(_ card: MemoCard, to customDeck: Deck) async throws {
-        try await customDeckService.addCard(
+        try await collectionsService.addCollectionItem(
             to: customDeck.id,
-            from: card.id,
+            wordId: card.id,
             userId: userId
         )
         removeCard(card)
@@ -108,26 +107,25 @@ final class CardDeckViewModel: ObservableObject {
         name: String,
         card: MemoCard
     ) async throws {
-        let deck = try await customDeckService.createCustomDeck(
-            parentDeckId: self.deck.id,
+        let deck = try await collectionsService.createCollection(
             userId: userId,
+            toLanguageCode: self.deck.toLanguageCode,
             name: name
         )
 
-        // Update local list so UI sees the new deck
         customDecks.append(deck)
 
-        try await customDeckService.addCard(
+        try await collectionsService.addCollectionItem(
             to: deck.id,
-            from: card.id,
+            wordId: card.id,
             userId: userId
         )
         removeCard(card)
     }
 
     func deleteCustomDeck(_ deck: Deck) async throws {
-        try await customDeckService.deleteCustomDeck(
-            customDeckId: deck.id,
+        try await collectionsService.deleteCollection(
+            collectionId: deck.id,
             userId: userId
         )
         customDecks.removeAll { $0.id == deck.id }
@@ -141,22 +139,24 @@ final class CardDeckViewModel: ObservableObject {
     func markKnown(_ card: MemoCard) {
         removeCard(card)
         Task {
-            try? await progressService.updateStatus(cardId: card.id, status: .known)
+            try? await progressService.updateStatus(
+                wordId: card.id,
+                status: .known,
+                fromLanguageCode: deck.fromLanguageCode,
+                toLanguageCode: deck.toLanguageCode
+            )
         }
     }
 
     func markReview(_ card: MemoCard) {
         removeCard(card)
         Task {
-            try? await progressService.updateStatus(cardId: card.id, status: .review)
-        }
-    }
-
-    func storeCard(_ card: MemoCard) {
-        removeCard(card)
-        Task {
-            //TODO: will be turned into save to a custom deck
-            //            try? await progressService.updateStatus(cardId: card.id, status: .custom)
+            try? await progressService.updateStatus(
+                wordId: card.id,
+                status: .review,
+                fromLanguageCode: deck.fromLanguageCode,
+                toLanguageCode: deck.toLanguageCode
+            )
         }
     }
 }

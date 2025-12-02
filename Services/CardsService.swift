@@ -4,27 +4,31 @@ import SwiftUI
 final class CardService {
 
     func fetchCards(
-        deckId: Int,
-        filter: CardSessionFilter,
-        userId: Int
+        wordSetId: Int,
+        fromLanguageCode: String,
+        toLanguageCode: String
     ) async throws -> [MemoCard] {
 
-        var path = "decks/\(deckId)/cards"
-        var queryItems: [String] = []
+        let path = APIEndpoints.wordSetWords(
+            id: wordSetId,
+            from: fromLanguageCode,
+            to: toLanguageCode
+        )
 
-        if let status = filter.backendStatusParam {
-            queryItems.append("userId=\(userId)")
-            queryItems.append("status=\(status)")
-        }
+        let response = try await APIConfig.client.request(
+            WordSetWordsResponseDTO.self,
+            path
+        )
 
-        if !queryItems.isEmpty {
-            path += "?" + queryItems.joined(separator: "&")
-        }
-
-        let dtos = try await APIConfig.client.request([CardDTO].self, path)
-
-        return dtos.enumerated().map { idx, dto in
-            MemoCard(from: dto, color: colorForIndex(idx))
+        return response.words.enumerated().map { index, word in
+            MemoCard(
+                id: word.wordId,
+                frontText: word.front,
+                backText: word.back,
+                difficulty: response.difficulty,
+                orderIndex: index,
+                color: colorForIndex(index)
+            )
         }
     }
 

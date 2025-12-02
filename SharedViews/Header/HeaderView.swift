@@ -2,17 +2,12 @@ import SwiftUI
 
 struct HeaderView: View {
 
-    @Binding var selectedTab: Tab
     @Binding var isInSession: Bool
 
-    
     let languagePair: LanguagePair?
 
-    
-    
     let onLanguageTap: () -> Void
 
-    
     let onBackFromSession: () -> Void
 
     var body: some View {
@@ -37,13 +32,12 @@ struct HeaderView: View {
                     )
                 }
             } else {
-                
                 Spacer().frame(width: 0)
             }
 
             Spacer()
 
-            // MARK: - Center: Language selector / indicator
+            // MARK: - Center: Language selector
             Button {
                 onLanguageTap()
             } label: {
@@ -72,7 +66,7 @@ struct HeaderView: View {
 
             Spacer()
 
-            // MARK: - Right: Decks icon (unchanged, for future collections)
+            // TODO: - Right: Decks icon (for future open collections screen later)
             Button {
             } label: {
                 Image(systemName: "rectangle.stack")

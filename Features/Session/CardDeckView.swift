@@ -150,7 +150,7 @@ struct CardDeckView: View {
                 }
                 .animation(.spring(), value: dragOffset)
 
-                // Labels…
+                // Labels
                 .overlay(alignment: .topTrailing) {
                     if dragOffset.width > 0 {
                         swipeLabel(text: "I understand", color: .green, alignment: .trailing)

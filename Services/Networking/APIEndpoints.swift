@@ -23,6 +23,16 @@ enum APIEndpoints {
         "word-sets/\(id)/words?from=\(from)&to=\(to)"
     }
 
+    static func wordSetProgressWords(
+        id: Int,
+        userId: Int,
+        from: String,
+        to: String,
+        status: String
+    ) -> String {
+        "word-sets/\(id)/words/progress?userId=\(userId)&from=\(from)&to=\(to)&status=\(status)"
+    }
+
     // MARK: - Progress
     static func wordProgress(wordId: Int) -> String {
         "words/\(wordId)/progress"
@@ -47,4 +57,13 @@ enum APIEndpoints {
     static func collection(collectionId: Int, userId: Int) -> String {
         "collections/\(collectionId)?userId=\(userId)"
     }
+
+    static func collectionWords(
+        collectionId: Int,
+        from: String,
+        to: String
+    ) -> String {
+        "collections/\(collectionId)/words?from=\(from)&to=\(to)"
+    }
+
 }

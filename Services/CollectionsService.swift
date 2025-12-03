@@ -6,17 +6,25 @@ final class CollectionsService {
 
     func fetchCollections(
         userId: Int,
+        fromLanguageCode: String,
         toLanguageCode: String
     ) async throws -> [Deck] {
         let path = APIEndpoints.collections(userId: userId, scope: .LANGUAGE)
         let dtos = try await APIConfig.client.request([CollectionDTO].self, path)
 
         let filtered = dtos.filter { $0.languageCode == toLanguageCode }
-        return filtered.map(Deck.init(from:))
+        return filtered.map {
+            Deck(
+                from: $0,
+                fromLanguageCode: fromLanguageCode,
+                toLanguageCode: toLanguageCode
+            )
+        }
     }
 
     func createCollection(
         userId: Int,
+        fromLanguageCode: String,
         toLanguageCode: String,
         name: String
     ) async throws -> Deck {
@@ -39,9 +47,13 @@ final class CollectionsService {
                 languageCode: toLanguageCode
             )
         )
-        return Deck(from: dto)
-    }
 
+        return Deck(
+            from: dto,
+            fromLanguageCode: fromLanguageCode,
+            toLanguageCode: toLanguageCode
+        )
+    }
     func addCollectionItem(
         to collectionId: Int,
         wordId: Int,

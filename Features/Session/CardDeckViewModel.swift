@@ -57,9 +57,9 @@ final class CardDeckViewModel: ObservableObject {
 
         do {
             let fetched = try await cardService.fetchCards(
-                wordSetId: deck.id,
-                fromLanguageCode: deck.fromLanguageCode,
-                toLanguageCode: deck.toLanguageCode
+                deck: deck,
+                filter: filter,
+                userId: userId
             )
             self.cards = fetched
         } catch {
@@ -84,6 +84,7 @@ final class CardDeckViewModel: ObservableObject {
         do {
             let decks = try await collectionsService.fetchCollections(
                 userId: userId,
+                fromLanguageCode: deck.fromLanguageCode,
                 toLanguageCode: deck.toLanguageCode
             )
             self.customDecks = decks
@@ -109,6 +110,7 @@ final class CardDeckViewModel: ObservableObject {
     ) async throws {
         let deck = try await collectionsService.createCollection(
             userId: userId,
+            fromLanguageCode: self.deck.fromLanguageCode,
             toLanguageCode: self.deck.toLanguageCode,
             name: name
         )

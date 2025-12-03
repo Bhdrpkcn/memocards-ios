@@ -1,5 +1,3 @@
-import Foundation
-
 struct Deck: Identifiable, Equatable, Hashable {
     let id: Int
     let name: String
@@ -9,12 +7,10 @@ struct Deck: Identifiable, Equatable, Hashable {
     let toLanguageCode: String
 
     let difficulty: CardDifficulty?
-
     let isCustom: Bool
-
     let cardCount: Int?
 
-    // MARK: - Mappers
+    // Word set
     init(from dto: WordSetDTO, pair: LanguagePair) {
         self.id = dto.id
         self.name = dto.name
@@ -26,12 +22,17 @@ struct Deck: Identifiable, Equatable, Hashable {
         self.cardCount = nil
     }
 
-    init(from collection: CollectionDTO) {
+    // Collection
+    init(
+        from collection: CollectionDTO,
+        fromLanguageCode: String,
+        toLanguageCode: String
+    ) {
         self.id = collection.id
         self.name = collection.name
         self.description = nil
-        self.fromLanguageCode = ""  
-        self.toLanguageCode = collection.languageCode ?? ""
+        self.fromLanguageCode = fromLanguageCode
+        self.toLanguageCode = toLanguageCode
         self.difficulty = nil
         self.isCustom = true
         self.cardCount = collection.itemCount

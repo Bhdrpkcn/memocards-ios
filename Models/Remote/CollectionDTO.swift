@@ -12,3 +12,11 @@ struct CollectionDTO: Decodable {
     let languageCode: String?
     let itemCount: Int?
 }
+
+struct CollectionWordsResponseDTO: Decodable {
+    let collectionId: Int
+    let name: String
+    let fromLanguage: String
+    let toLanguage: String
+    let words: [WordItemDTO]
+}

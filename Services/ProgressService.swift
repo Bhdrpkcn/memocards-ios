@@ -37,7 +37,3 @@ final class ProgressService {
     }
 }
 
-struct ProgressResponseDTO: Decodable {
-    let id: Int
-    let statusKind: CardStatusKind
-}

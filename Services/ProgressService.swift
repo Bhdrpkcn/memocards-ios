@@ -10,24 +10,30 @@ final class ProgressService {
 
     private struct ProgressRequest: Encodable {
         let userId: Int
+        let fromLanguageCode: String
+        let toLanguageCode: String
         let status: CardStatusKind
     }
 
-    func updateStatus(cardId: Int, status: CardStatusKind) async throws {
-        let body = ProgressRequest(userId: userId, status: status)
+    func updateStatus(
+        wordId: Int,
+        status: CardStatusKind,
+        fromLanguageCode: String,
+        toLanguageCode: String
+    ) async throws {
+        let body = ProgressRequest(
+            userId: userId,
+            fromLanguageCode: fromLanguageCode,
+            toLanguageCode: toLanguageCode,
+            status: status
+        )
 
         _ = try await APIConfig.client.request(
             ProgressResponseDTO.self,
-            "cards/\(cardId)/progress",
+            APIEndpoints.wordProgress(wordId: wordId),
             method: .POST,
             body: body
         )
     }
 }
 
-// TODO: For now we only care that decoding succeeds.
-/// Backend returns a lot more, but we don’t *need* it yet.
-struct ProgressResponseDTO: Decodable {
-    let id: Int
-    let statusKind: CardStatusKind
-}

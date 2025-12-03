@@ -2,13 +2,19 @@ import Foundation
 
 final class DeckService {
 
-    func fetchDecks() async throws -> [Deck] {
-        let dtos = try await APIConfig.client.request([DeckSummaryDTO].self, APIEndpoints.decks())
-        return dtos.map(Deck.init(from:))
-    }
+    func fetchDecks(
+        from fromLanguageCode: String,
+        to toLanguageCode: String,
+        difficulty: CardDifficulty? = nil
+    ) async throws -> [Deck] {
+        let path = APIEndpoints.wordSets(
+            from: fromLanguageCode,
+            to: toLanguageCode,
+            difficulty: difficulty
+        )
 
-    func fetchDeckDetail(id: Int) async throws -> Deck {
-        let dto = try await APIConfig.client.request(DeckDetailDTO.self, APIEndpoints.deck(id))
-        return Deck(from: dto)
+        let dtos = try await APIConfig.client.request([WordSetDTO].self, path)
+        let pair = LanguagePair(fromCode: fromLanguageCode, toCode: toLanguageCode)
+        return dtos.map { Deck(from: $0, pair: pair) }
     }
 }

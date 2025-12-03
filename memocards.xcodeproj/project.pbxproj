@@ -55,19 +55,24 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		E021D6552EC7498100FF6A9F /* UI */ = {
+		E021D6572EC7499400FF6A9F /* SharedViews */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SharedViews;
+			sourceTree = "<group>";
+		};
+		E021D76F2EDD981600FF6A9F /* Coordinator */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Coordinator;
+			sourceTree = "<group>";
+		};
+		E021D8502EDDA08800FF6A9F /* UI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = UI;
 			sourceTree = "<group>";
 		};
-		E021D6562EC7498A00FF6A9F /* ViewModels */ = {
+		E021D8632EDDA42A00FF6A9F /* Features */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		E021D6572EC7499400FF6A9F /* Views */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Views;
+			path = Features;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -101,11 +106,12 @@
 			isa = PBXGroup;
 			children = (
 				E021D64D2EC7486600FF6A9F /* App */,
-				E021D6572EC7499400FF6A9F /* Views */,
-				E021D6562EC7498A00FF6A9F /* ViewModels */,
+				E021D76F2EDD981600FF6A9F /* Coordinator */,
+				E021D8632EDDA42A00FF6A9F /* Features */,
+				E021D6572EC7499400FF6A9F /* SharedViews */,
 				E021D6512EC748B500FF6A9F /* Models */,
-				E021D6552EC7498100FF6A9F /* UI */,
 				E021D6542EC7497700FF6A9F /* Services */,
+				E021D8502EDDA08800FF6A9F /* UI */,
 				E021D6502EC748A800FF6A9F /* Common */,
 				E021D6522EC748C100FF6A9F /* Resources */,
 				E021D6802ECB2ABB00FF6A9F /* memocards.app */,
@@ -135,9 +141,10 @@
 				E021D6512EC748B500FF6A9F /* Models */,
 				E021D6522EC748C100FF6A9F /* Resources */,
 				E021D6542EC7497700FF6A9F /* Services */,
-				E021D6552EC7498100FF6A9F /* UI */,
-				E021D6562EC7498A00FF6A9F /* ViewModels */,
-				E021D6572EC7499400FF6A9F /* Views */,
+				E021D6572EC7499400FF6A9F /* SharedViews */,
+				E021D76F2EDD981600FF6A9F /* Coordinator */,
+				E021D8502EDDA08800FF6A9F /* UI */,
+				E021D8632EDDA42A00FF6A9F /* Features */,
 			);
 			name = memocards;
 			packageProductDependencies = (

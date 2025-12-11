@@ -7,8 +7,8 @@ struct HeaderView: View {
     let languagePair: LanguagePair?
 
     let onLanguageTap: () -> Void
-
     let onBackFromSession: () -> Void
+    let onDecksTap: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -26,10 +26,6 @@ struct HeaderView: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGray6))
-                    )
                 }
             } else {
                 Spacer().frame(width: 0)
@@ -37,37 +33,52 @@ struct HeaderView: View {
 
             Spacer()
 
-            // MARK: - Center: Language selector
+            // MARK: - Center: flags + target language + arrow
             Button {
                 onLanguageTap()
             } label: {
-                VStack(spacing: 2) {
+                HStack(spacing: 8) {
                     if let pair = languagePair {
-                        Text(pair.displayText)
-                            .font(.headline)
-                        Text("Tap to change")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        // Flags stacked
+                        ZStack {
+                            Text(pair.fromFlagEmoji)
+                                .font(.title3)
+                                .offset(x: -6, y: -3)
+
+                            Text(pair.toFlagEmoji)
+                                .font(.title)
+                                .offset(x: 6, y: 3)
+                        }
+                        .frame(width: 40, height: 28)
+
+                        HStack(spacing: 4) {
+                            Text(pair.toName)
+                                .font(.headline)
+
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.secondary)
+                        }
                     } else {
-                        Text("Choose languages")
-                            .font(.headline)
-                        Text("Tap to start")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        // No pair yet → prompt
+                        HStack(spacing: 4) {
+                            Text("Choose languages")
+                                .font(.headline)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemGray6))
-                )
             }
+            .opacity(languagePair == nil ? 0 : 1)
+            .animation(.easeInOut, value: languagePair != nil)
 
             Spacer()
 
-            // TODO: - Right: Decks icon (for future open collections screen later)
+            // MARK: - Right: Decks icon (future collections screen, etc.)
             Button {
+                onDecksTap()
             } label: {
                 Image(systemName: "rectangle.stack")
                     .font(.system(size: 20, weight: .semibold))
@@ -77,6 +88,5 @@ struct HeaderView: View {
         .padding(.horizontal)
         .padding(.top, 12)
         .padding(.bottom, 8)
-        .background(.ultraThinMaterial)
     }
 }

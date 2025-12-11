@@ -10,7 +10,10 @@ struct ContentView: View {
     @State private var activeDeck: Deck?
     @State private var activeFilter: CardSessionFilter = .all
 
-    @State private var languagePair: LanguagePair?
+    @State private var languagePair: LanguagePair? = LanguagePreferenceStore.load()
+
+
+    @State private var isLanguageSheetPresented = false
 
     //TODO: later from auth
     private let userId: Int = 1
@@ -20,30 +23,32 @@ struct ContentView: View {
             VStack(spacing: 0) {
 
                 // MARK: - Header
+
                 HeaderView(
                     isInSession: $isInSession,
                     languagePair: languagePair,
                     onLanguageTap: handleLanguageTap,
-                    onBackFromSession: endSession
+                    onBackFromSession: endSession,
+                    onDecksTap: {
+                        nav.openLibrary()
+                    }
                 )
 
-                Divider()
-                    .overlay(Color.white.opacity(0.7))
-                    .frame(height: 1)
-
-                // MARK: - Main body (root = Learn/Home via StartView)
+                // MARK: - Main body
                 StartView(
                     languagePair: languagePair,
+                    onLanguagePairChange: { pair in
+                        languagePair = pair
+                    },
                     isInSession: $isInSession,
                     activeDeck: $activeDeck,
                     activeFilter: $activeFilter,
                     userId: userId,
                     onStartSession: { deck, filter in
                         startSession(with: deck, filter: filter)
-                    }
+                    },
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemBackground))
 
                 // MARK: - Footer
                 if !isInSession {
@@ -57,15 +62,33 @@ struct ContentView: View {
             .ignoresSafeArea(.keyboard)
 
             // MARK: - DESTINATIONS
-            /// Library
             .navigationDestination(isPresented: nav.isLibraryActive) {
                 LibraryView()
             }
 
-            /// Profile
             .navigationDestination(isPresented: nav.isProfileActive) {
                 ProfileView()
             }
+            .sheet(isPresented: $isLanguageSheetPresented) {
+                LanguageChangeSheet(
+                    initialPair: languagePair,
+                    onConfirm: { newPair in
+
+                        if isInSession {
+                            endSession()
+                        }
+
+                        LanguagePreferenceStore.save(newPair)
+                        languagePair = newPair
+
+                    },
+                    onReset: {
+                        LanguagePreferenceStore.clear()
+                        languagePair = nil
+                    }
+                )
+            }
+
         }
     }
 
@@ -90,6 +113,7 @@ struct ContentView: View {
     }
 
     private func handleLanguageTap() {
-        nav.goHome()
+        isLanguageSheetPresented = true
     }
+
 }

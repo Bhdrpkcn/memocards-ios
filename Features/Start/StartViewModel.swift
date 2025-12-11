@@ -3,6 +3,9 @@ import Foundation
 @MainActor
 final class StartViewModel: ObservableObject {
 
+    var onLanguagePairConfirmed: ((LanguagePair) -> Void)?
+    var onLanguageReset: (() -> Void)?
+
     // MARK: - Step State
 
     @Published var step: StartStep = .chooseFromLanguage
@@ -61,6 +64,28 @@ final class StartViewModel: ObservableObject {
         ]
     }
 
+    private func restoreLanguagePairIfNeeded() {
+        guard let pair = LanguagePreferenceStore.load() else { return }
+        selectedFromCode = pair.fromCode
+        selectedToCode = pair.toCode
+        step = .chooseContent(from: pair.fromCode, to: pair.toCode)
+    }
+
+    func applyLanguagePair(_ pair: LanguagePair?) {
+        if let pair = pair {
+            selectedFromCode = pair.fromCode
+            selectedToCode = pair.toCode
+            step = .chooseContent(from: pair.fromCode, to: pair.toCode)
+
+            decks = []
+            collections = []
+            selectedDeck = nil
+            errorMessage = nil
+        } else {
+            restartFlow()
+        }
+    }
+
     // MARK: - Step transitions
 
     func selectFromLanguage(_ code: String) {
@@ -75,10 +100,34 @@ final class StartViewModel: ObservableObject {
     func selectToLanguage(_ code: String) {
         guard let from = selectedFromCode, from != code else { return }
         selectedToCode = code
-        step = .chooseContent(from: from, to: code)
+        //TODO: Remove? // step = .chooseContent(from: from, to: code)
+    }
+
+    func confirmLanguages() {
+        guard let from = selectedFromCode,
+            let to = selectedToCode
+        else { return }
+
+        let pair = LanguagePair(fromCode: from, toCode: to)
+        LanguagePreferenceStore.save(pair)
+
+        onLanguagePairConfirmed?(pair)
+
+        step = .chooseContent(from: from, to: to)
+    }
+
+    func startLanguageChangeFlow(currentPair: LanguagePair?) {
+        if let pair = currentPair {
+            selectedFromCode = pair.fromCode
+            selectedToCode = pair.toCode
+            step = .chooseToLanguage(from: pair.fromCode)
+        } else {
+            restartFlow()
+        }
     }
 
     func restartFlow() {
+        LanguagePreferenceStore.clear()
         selectedFromCode = nil
         selectedToCode = nil
         decks = []
@@ -88,6 +137,8 @@ final class StartViewModel: ObservableObject {
         errorMessage = nil
         isLoadingContent = false
         step = .chooseFromLanguage
+
+        onLanguageReset?()
     }
 
     // MARK: - Load word sets + collections together
@@ -133,4 +184,5 @@ final class StartViewModel: ObservableObject {
     func setFilter(_ filter: CardSessionFilter) {
         selectedFilter = filter
     }
+
 }

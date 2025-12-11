@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E021D9A22EE2CC1B00FF6A9F /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = E021D9A12EE2CC1B00FF6A9F /* Lottie */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E021D5652EC7448700FF6A9F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -82,6 +86,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E021D9A22EE2CC1B00FF6A9F /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,6 +153,7 @@
 			);
 			name = memocards;
 			packageProductDependencies = (
+				E021D9A12EE2CC1B00FF6A9F /* Lottie */,
 			);
 			productName = memocards;
 			productReference = E021D6802ECB2ABB00FF6A9F /* memocards.app */;
@@ -225,6 +231,9 @@
 			);
 			mainGroup = E021D54E2EC7448600FF6A9F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E021D9A02EE2CC1B00FF6A9F /* XCRemoteSwiftPackageReference "lottie-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E021D54E2EC7448600FF6A9F;
 			projectDirPath = "";
@@ -582,6 +591,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E021D9A02EE2CC1B00FF6A9F /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E021D9A12EE2CC1B00FF6A9F /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E021D9A02EE2CC1B00FF6A9F /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E021D54F2EC7448600FF6A9F /* Project object */;
 }

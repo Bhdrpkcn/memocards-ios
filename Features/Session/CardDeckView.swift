@@ -11,11 +11,9 @@ struct CardDeckView: View {
     @State private var isFlipped = false
     @State private var dragOffset: CGSize = .zero
 
-    // Custom deck state
     @State private var pendingCardToSave: MemoCard?
     @State private var newDeckName: String = ""
 
-    // Overlay + sheet
     @State private var showDeckChoiceOverlay = false
     @State private var showCustomDeckSheet = false
     @State private var isSavingToDeck = false
@@ -393,6 +391,7 @@ struct CardDeckView: View {
     }
 }
 
+//TODO: Move this customdecksheet to seperared view ?
 private struct CustomDeckSheet: View {
 
     @ObservedObject var vm: CardDeckViewModel
@@ -424,7 +423,7 @@ private struct CustomDeckSheet: View {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text(deck.name)
                                                 .font(.headline)
-                                            Text("\(deck.cardCount) cards")
+                                            Text("\(String(describing: deck.cardCount)) cards")
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
                                         }

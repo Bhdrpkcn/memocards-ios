@@ -88,12 +88,7 @@ struct DeckSelectionView: View {
                     .padding(.horizontal, 40)
             }
             .disabled(selectedDeck == nil)
-
-            Button(role: .cancel, action: onChangeLanguages) {
-                Text("Change languages")
-                    .font(.subheadline)
-            }
-            .padding(.top, 4)
+            .padding(.bottom, 12)
         }
         .padding(.horizontal, 16)
     }

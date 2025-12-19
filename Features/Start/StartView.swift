@@ -2,56 +2,90 @@ import SwiftUI
 
 struct StartView: View {
 
-    let languagePair: LanguagePair?
-    ///callback for parent to know pair change
-    let onLanguagePairChange: (LanguagePair?) -> Void
-
     @Binding var isInSession: Bool
     @Binding var activeDeck: Deck?
     @Binding var activeFilter: CardSessionFilter
 
     let userId: Int
     let onStartSession: (Deck, CardSessionFilter) -> Void
+    let onEndSession: () -> Void
+    let onOpenLibrary: () -> Void
 
     @StateObject private var viewModel = StartViewModel()
 
+    @State private var languagePair: LanguagePair?
+    @State private var isLanguageSheetPresented = false
+    @State private var sheetInitialPair: LanguagePair?
+
     var body: some View {
-        Group {
-            if isInSession, let deck = activeDeck {
-                CardDeckView(
-                    deck: deck,
-                    filter: activeFilter,
-                    userId: userId
-                )
-            } else {
-                mainStartFlow
-                    .onAppear {
-                        // wire callbacks for StartView → parent
-                        viewModel.onLanguagePairConfirmed = { pair in
-                            onLanguagePairChange(pair)
-                        }
-                        viewModel.onLanguageReset = {
-                            onLanguagePairChange(nil)
-                        }
+        VStack(spacing: 0) {
+            HeaderView(
+                isInSession: $isInSession,
+                languagePair: languagePair,
+                onLanguageTap: handleLanguageTap,
+                onBackFromSession: {
+                    onEndSession()
+                },
+                onDecksTap: {
+                    onOpenLibrary()
+                }
+            )
 
-                        // initial sync (app launch with stored pair)
-                        syncWithLanguagePair(languagePair)
-                    }
-                    .onChange(of: languagePair) { newPair in
-                        // header changed the pair
-                        syncWithLanguagePair(newPair)
-                    }
-
+            Group {
+                if isInSession, let deck = activeDeck {
+                    CardDeckView(
+                        deck: deck,
+                        filter: activeFilter,
+                        userId: userId
+                    )
+                } else {
+                    mainStartFlow
+                        .onAppear(perform: setupOnAppear)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .ignoresSafeArea(.keyboard)
+        .sheet(isPresented: $isLanguageSheetPresented) {
+            languageSheet
+        }
+        .task {
+            await viewModel.loadLanguageOptions()
         }
     }
-    private func syncWithLanguagePair(_ pair: LanguagePair?) {
-        viewModel.applyLanguagePair(pair)
 
-        guard pair != nil else { return }
+    // MARK: - First-time setup
+    private func setupOnAppear() {
+        viewModel.onLanguagePairConfirmed = { pair in
+            languagePair = pair
 
-        Task {
-            await viewModel.loadContentForCurrentPair(userId: userId)
+            if isInSession {
+                onEndSession()
+            }
+
+            Task {
+                await viewModel.loadContentForCurrentPair(userId: userId)
+            }
+        }
+
+        viewModel.onLanguageReset = {
+            languagePair = nil
+
+            if isInSession {
+                onEndSession()
+            }
+        }
+
+        if languagePair == nil {
+            let stored = LanguagePreferenceStore.load()
+            languagePair = stored
+            viewModel.applyLanguagePair(stored)
+
+            if stored != nil {
+                Task {
+                    await viewModel.loadContentForCurrentPair(userId: userId)
+                }
+            }
         }
     }
 
@@ -61,19 +95,12 @@ struct StartView: View {
 
             MascotAnimationView()
                 .frame(height: 220)
-                .padding(.top, 8)
+                .padding(.vertical, -20)
 
             VStack(spacing: 6) {
                 Text(currentTitle)
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
-
-                if let subtitle = currentSubtitle {
-                    Text(subtitle)
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
             }
             .padding(.horizontal, 24)
 
@@ -82,12 +109,10 @@ struct StartView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        //        .background(Color(.systemBackground))
         .background(Color.white.opacity(0.7))
     }
 
     // MARK: - Step title/subtitle
-
     private var currentTitle: String {
         switch viewModel.step {
         case .chooseFromLanguage:
@@ -96,27 +121,6 @@ struct StartView: View {
             return "Which language do you\nwant to learn to?"
         case .chooseContent:
             return "Select what to learn"
-        }
-    }
-
-    private var currentSubtitle: String? {
-        switch viewModel.step {
-        case .chooseFromLanguage:
-            return nil
-
-        case .chooseToLanguage(let fromCode):
-            let fromName = languageName(for: fromCode)
-            if let toCode = viewModel.selectedToCode {
-                let toName = languageName(for: toCode)
-                return "From \(fromName) to \(toName)"
-            } else {
-                return "From \(fromName)"
-            }
-
-        case .chooseContent(let fromCode, let toCode):
-            let fromName = languageName(for: fromCode)
-            let toName = languageName(for: toCode)
-            return "\(fromName) → \(toName)"
         }
     }
 
@@ -194,54 +198,113 @@ struct StartView: View {
         }
     }
 
-    //TODO: Move into a file ?
-    // MARK: - Helpers
     private var shouldShowLanguageActions: Bool {
         guard case .chooseToLanguage = viewModel.step else {
             return false
         }
         return viewModel.selectedFromCode != nil && viewModel.selectedToCode != nil
     }
-}
 
-// MARK: - Action bar
-struct LanguageSelectionActionsView: View {
-    let onReset: () -> Void
-    let onConfirm: () -> Void
+    // MARK: - Header actions
+    private func handleLanguageTap() {
+        guard let currentPair = languagePair else { return }
 
-    var body: some View {
-        GeometryReader { geo in
-            let totalWidth = geo.size.width
-            let resetWidth = totalWidth * 0.25
-            let okWidth = totalWidth * 0.75
+        sheetInitialPair = currentPair
+        viewModel.startLanguageChangeFlow(currentPair: currentPair)
+        isLanguageSheetPresented = true
+    }
 
-            HStack(spacing: 12) {
-                Button {
-                    onReset()
-                } label: {
-                    Text("Reset")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(width: resetWidth, height: 40)
-                        .background(Color(.systemGray5))
-                        .foregroundColor(.primary)
-                        .cornerRadius(12)
-                }
+    // MARK: - Language sheet
+    private var languageSheet: some View {
+        NavigationView {
+            VStack(spacing: 12) {
+                Text("Choose languages")
+                    .font(.headline)
+                    .padding(.top, 12)
 
-                Button {
-                    onConfirm()
-                } label: {
-                    Text("OK")
-                        .font(.headline)
-                        .frame(width: okWidth, height: 40)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                Text("Tap once to select source and target languages.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+
+                LanguageSelectionView(
+                    step: viewModel.step,
+                    availableLanguages: viewModel.availableLanguages,
+                    selectedFromCode: viewModel.selectedFromCode,
+                    selectedToCode: viewModel.selectedToCode,
+                    onSelectFrom: { code in
+                        viewModel.selectFromLanguage(code)
+                    },
+                    onSelectTo: { code in
+                        viewModel.selectToLanguage(code)
+                    }
+                )
+
+                LanguageSelectionActionsView(
+                    onReset: {
+                        viewModel.restartFlow()
+                        isLanguageSheetPresented = false
+                    },
+                    onConfirm: {
+                        viewModel.confirmLanguages()
+                        isLanguageSheetPresented = false
+                    }
+                )
+
+                Spacer()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        viewModel.applyLanguagePair(sheetInitialPair)
+                        isLanguageSheetPresented = false
+                    }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .center)
         }
-        .frame(height: 44)
-        .padding(.top, 8)
-        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Action bar
+    struct LanguageSelectionActionsView: View {
+        let onReset: () -> Void
+        let onConfirm: () -> Void
+
+        var body: some View {
+            GeometryReader { geo in
+                let totalWidth = geo.size.width
+                let resetWidth = totalWidth * 0.25
+                let okWidth = totalWidth * 0.75
+
+                HStack(spacing: 12) {
+                    Button {
+                        onReset()
+                    } label: {
+                        Text("Reset")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(width: resetWidth, height: 40)
+                            .background(Color(.systemGray5))
+                            .foregroundColor(.primary)
+                            .cornerRadius(12)
+                    }
+
+                    Button {
+                        onConfirm()
+                    } label: {
+                        Text("OK")
+                            .font(.headline)
+                            .frame(width: okWidth, height: 40)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .frame(height: 44)
+            .padding(.top, 8)
+            .padding(.horizontal, 24)
+        }
     }
 }

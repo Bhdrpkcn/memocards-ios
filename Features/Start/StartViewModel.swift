@@ -3,16 +3,15 @@ import Foundation
 @MainActor
 final class StartViewModel: ObservableObject {
 
+    // MARK: - Callbacks to StartView
     var onLanguagePairConfirmed: ((LanguagePair) -> Void)?
     var onLanguageReset: (() -> Void)?
 
     // MARK: - Step State
-
     @Published var step: StartStep = .chooseFromLanguage
     @Published var availableLanguages: [LanguageOption] = []
 
     // MARK: - Selected language state
-
     @Published var selectedFromCode: String?
     @Published var selectedToCode: String?
 
@@ -28,13 +27,22 @@ final class StartViewModel: ObservableObject {
     @Published var selectedFilter: CardSessionFilter = .all
 
     @Published var isLoadingContent = false
+    //TODO: use isLoading state for languages also
+    @Published var isLoadingLanguages = false
     @Published var errorMessage: String?
 
-    private let deckService = DeckService()
-    private let collectionsService = CollectionsService()
+    private let deckService: DeckService
+    private let collectionsService: CollectionsService
+    private let languageService: LanguageService
 
-    init() {
-        loadLanguageOptions()
+    init(
+        deckService: DeckService = DeckService(),
+        collectionsService: CollectionsService = CollectionsService(),
+        languageService: LanguageService = LanguageService()
+    ) {
+        self.deckService = deckService
+        self.collectionsService = collectionsService
+        self.languageService = languageService
     }
 
     // MARK: - Computed groups
@@ -52,23 +60,24 @@ final class StartViewModel: ObservableObject {
     }
 
     // MARK: - Setup
-
-    private func loadLanguageOptions() {
-        // TODO: Later load from backend / languages endpoint.
-        availableLanguages = [
-            LanguageOption(code: "en", name: "English"),
-            LanguageOption(code: "tr", name: "Turkish"),
-            LanguageOption(code: "de", name: "German"),
-            LanguageOption(code: "es", name: "Spanish"),
-            LanguageOption(code: "fr", name: "French"),
-        ]
-    }
-
-    private func restoreLanguagePairIfNeeded() {
-        guard let pair = LanguagePreferenceStore.load() else { return }
-        selectedFromCode = pair.fromCode
-        selectedToCode = pair.toCode
-        step = .chooseContent(from: pair.fromCode, to: pair.toCode)
+    func loadLanguageOptions() async {
+        do {
+            let options = try await languageService.fetchLanguages()
+            await MainActor.run {
+                self.availableLanguages = options
+            }
+        } catch {
+            // Fallback if backend fails
+            await MainActor.run {
+                self.availableLanguages = [
+                    LanguageOption(code: "en", name: "English"),
+                    LanguageOption(code: "tr", name: "Turkish"),
+                    LanguageOption(code: "de", name: "German"),
+                    LanguageOption(code: "es", name: "Spanish"),
+                    LanguageOption(code: "fr", name: "French"),
+                ]
+            }
+        }
     }
 
     func applyLanguagePair(_ pair: LanguagePair?) {
@@ -87,7 +96,6 @@ final class StartViewModel: ObservableObject {
     }
 
     // MARK: - Step transitions
-
     func selectFromLanguage(_ code: String) {
         selectedFromCode = code
         selectedToCode = nil
@@ -100,7 +108,6 @@ final class StartViewModel: ObservableObject {
     func selectToLanguage(_ code: String) {
         guard let from = selectedFromCode, from != code else { return }
         selectedToCode = code
-        //TODO: Remove? // step = .chooseContent(from: from, to: code)
     }
 
     func confirmLanguages() {
@@ -142,7 +149,6 @@ final class StartViewModel: ObservableObject {
     }
 
     // MARK: - Load word sets + collections together
-
     func loadContentForCurrentPair(userId: Int) async {
         guard let from = selectedFromCode,
             let to = selectedToCode
@@ -180,9 +186,7 @@ final class StartViewModel: ObservableObject {
     }
 
     // MARK: - Filter selection
-
     func setFilter(_ filter: CardSessionFilter) {
         selectedFilter = filter
     }
-
 }

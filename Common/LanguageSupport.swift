@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Language → Human-readable name
-
 func languageDisplayName(for code: String) -> String {
     switch code.lowercased() {
     case "en": return "English"
@@ -10,7 +8,7 @@ func languageDisplayName(for code: String) -> String {
     case "de": return "German"
     case "es": return "Spanish"
     default:
-        // Fallback: try system locale
+        // Fallback: system locale
         if let localized = Locale.current.localizedString(forLanguageCode: code) {
             return localized.capitalized
         }
@@ -19,9 +17,9 @@ func languageDisplayName(for code: String) -> String {
 }
 
 // MARK: - Language → Region code mapping for flags
-
 private let languageToRegionCode: [String: String] = [
-    "en": "US",
+    //TODO: fix american flag to england (en to US changed to "en" : "EN")
+    "en": "EN",
     "tr": "TR",
     "fr": "FR",
     "de": "DE",

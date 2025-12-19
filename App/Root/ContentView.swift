@@ -10,11 +10,6 @@ struct ContentView: View {
     @State private var activeDeck: Deck?
     @State private var activeFilter: CardSessionFilter = .all
 
-    @State private var languagePair: LanguagePair? = LanguagePreferenceStore.load()
-
-
-    @State private var isLanguageSheetPresented = false
-
     //TODO: later from auth
     private let userId: Int = 1
 
@@ -22,24 +17,8 @@ struct ContentView: View {
         NavigationStack {
             VStack(spacing: 0) {
 
-                // MARK: - Header
-
-                HeaderView(
-                    isInSession: $isInSession,
-                    languagePair: languagePair,
-                    onLanguageTap: handleLanguageTap,
-                    onBackFromSession: endSession,
-                    onDecksTap: {
-                        nav.openLibrary()
-                    }
-                )
-
                 // MARK: - Main body
                 StartView(
-                    languagePair: languagePair,
-                    onLanguagePairChange: { pair in
-                        languagePair = pair
-                    },
                     isInSession: $isInSession,
                     activeDeck: $activeDeck,
                     activeFilter: $activeFilter,
@@ -47,6 +26,13 @@ struct ContentView: View {
                     onStartSession: { deck, filter in
                         startSession(with: deck, filter: filter)
                     },
+                    onEndSession: {
+                        endSession()
+                    },
+                    onOpenLibrary: {
+                        nav.openLibrary()
+                    }
+
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -69,26 +55,6 @@ struct ContentView: View {
             .navigationDestination(isPresented: nav.isProfileActive) {
                 ProfileView()
             }
-            .sheet(isPresented: $isLanguageSheetPresented) {
-                LanguageChangeSheet(
-                    initialPair: languagePair,
-                    onConfirm: { newPair in
-
-                        if isInSession {
-                            endSession()
-                        }
-
-                        LanguagePreferenceStore.save(newPair)
-                        languagePair = newPair
-
-                    },
-                    onReset: {
-                        LanguagePreferenceStore.clear()
-                        languagePair = nil
-                    }
-                )
-            }
-
         }
     }
 
@@ -97,13 +63,6 @@ struct ContentView: View {
         activeDeck = deck
         activeFilter = filter
         isInSession = true
-
-        //TODO: later derive it from word-set collection instead of deck
-        languagePair = LanguagePair(
-            fromCode: deck.fromLanguageCode,
-            toCode: deck.toLanguageCode
-        )
-
         nav.goHome()
     }
 
@@ -111,9 +70,4 @@ struct ContentView: View {
         isInSession = false
         activeDeck = nil
     }
-
-    private func handleLanguageTap() {
-        isLanguageSheetPresented = true
-    }
-
 }

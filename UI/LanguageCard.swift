@@ -4,23 +4,20 @@ enum LanguageRole {
     case none
     case source
     case target
-    case both
 
     var label: String? {
         switch self {
         case .none: return nil
         case .source: return "Source"
         case .target: return "Target"
-        case .both: return "Source + Target"
         }
     }
 
     var tintColor: Color {
         switch self {
         case .none: return .clear
-        case .source: return .blue
-        case .target: return .green
-        case .both: return .purple
+        case .source: return AppTheme.Colors.progress
+        case .target: return AppTheme.Colors.success
         }
     }
 }
@@ -40,7 +37,7 @@ struct LanguageCard: View {
                 VStack(spacing: 6) {
                     Text(option.name)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
+                        .foregroundColor(AppTheme.Colors.textPrimary)
                         .frame(maxWidth: .infinity, minHeight: 34)
                 }
                 .padding(.horizontal, 10)
@@ -68,12 +65,12 @@ struct LanguageCard: View {
                 if isSelected, let label = role.label {
                     Text(label.uppercased())
                         .font(.caption2.weight(.bold))
-                        .foregroundColor(Color.blue.opacity(0.9))
+                        .foregroundColor(AppTheme.Colors.progress.opacity(0.9))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
                         .background(
                             Capsule()
-                                .fill(Color(.systemBackground).opacity(0.9))
+                                .fill(AppTheme.Colors.screenBackground.opacity(0.9))
                                 .shadow(radius: 1)
                         )
                         .overlay(
@@ -95,18 +92,18 @@ struct LanguageCard: View {
 
     private var backgroundColor: Color {
         if isDisabled {
-            return Color(.systemGray5)
+            return Color(AppTheme.Colors.disabled)
         }
         if isSelected {
-            return role.tintColor.opacity(0.10)
+            return role.tintColor.opacity(0.30)
         }
-        return Color(.systemGray6)
+        return AppTheme.Colors.screenSecBackground
     }
 
     private var borderColor: Color {
         if isSelected {
-            return role.tintColor == .clear ? .blue : role.tintColor
+            return role.tintColor
         }
-        return Color(.systemGray4)
+        return AppTheme.Colors.disabled
     }
 }

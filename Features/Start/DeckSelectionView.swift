@@ -75,7 +75,7 @@ struct DeckSelectionView: View {
 
             if let errorMessage, !errorMessage.isEmpty {
                 Text(errorMessage)
-                    .foregroundColor(.red)
+                    .foregroundColor(AppTheme.Colors.error)
             }
 
             filterRow
@@ -85,8 +85,8 @@ struct DeckSelectionView: View {
                     .font(.headline)
                     .padding(.vertical)
                     .padding(.horizontal, 60)
-                    .background(selectedDeck == nil ? Color.gray : Color.blue)
-                    .foregroundColor(.white)
+                    .background(selectedDeck == nil ? AppTheme.Colors.disabled : AppTheme.Colors.progress)
+                    .foregroundColor(AppTheme.Colors.textPrimary)
                     .cornerRadius(14)
                     
             }
@@ -143,7 +143,7 @@ struct DeckSelectionView: View {
             sourceButton(.user)
         }
         .padding(4)
-        .background(Color(.systemGray6))
+        .background(AppTheme.Colors.screenSecBackground)
         .cornerRadius(12)
         .padding(.horizontal, 12)
     }
@@ -157,7 +157,7 @@ struct DeckSelectionView: View {
                 .font(.subheadline.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(source == target ? Color.white : Color.clear)
+                .background(source == target ? AppTheme.Colors.whiteBackground : Color.clear)
                 .cornerRadius(10)
                 .foregroundColor(source == target ? .black : .secondary)
         }
@@ -172,7 +172,7 @@ struct DeckSelectionView: View {
                 .font(.headline)
             Text("Try switching the source or changing languages.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppTheme.Colors.textSecondary)
         }
         .padding(.horizontal, 20)
     }
@@ -198,7 +198,7 @@ struct DeckSelectionView: View {
                 Text(label)
                     .font(.caption2)
             }
-            .foregroundColor(selectedFilter == type ? .blue : .gray)
+            .foregroundColor(selectedFilter == type ? AppTheme.Colors.progress : AppTheme.Colors.disabled)
             .padding(6)
         }
         .buttonStyle(.plain)

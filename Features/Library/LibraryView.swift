@@ -9,7 +9,7 @@ struct LibraryView: View {
                 .font(.title.bold())
             Text("Placeholder – later we'll show saved decks, collections, stats, etc.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppTheme.Colors.secondary)
 
             Button("Back to Home") {
                 nav.reset()
@@ -17,6 +17,6 @@ struct LibraryView: View {
             .padding(.top, 24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
+        .background(AppTheme.Colors.screenBackground)
     }
 }

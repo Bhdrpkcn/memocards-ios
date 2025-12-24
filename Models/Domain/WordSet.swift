@@ -10,31 +10,23 @@ struct Deck: Identifiable, Equatable, Hashable {
     let isCustom: Bool
     let cardCount: Int?
 
-    // Word set
-    init(from dto: WordSetDTO, pair: LanguagePair) {
-        self.id = dto.id
-        self.name = dto.name
-        self.description = dto.description
-        self.fromLanguageCode = pair.fromCode
-        self.toLanguageCode = pair.toCode
-        self.difficulty = dto.difficulty
-        self.cardCount = dto.wordCount
-        self.isCustom = false
-    }
-
-    // Collection
     init(
-        from collection: CollectionDTO,
+        id: Int,
+        name: String,
+        description: String? = nil,
         fromLanguageCode: String,
-        toLanguageCode: String
+        toLanguageCode: String,
+        difficulty: CardDifficulty? = nil,
+        isCustom: Bool,
+        cardCount: Int? = nil
     ) {
-        self.id = collection.id
-        self.name = collection.name
-        self.description = nil
+        self.id = id
+        self.name = name
+        self.description = description
         self.fromLanguageCode = fromLanguageCode
         self.toLanguageCode = toLanguageCode
-        self.difficulty = nil
-        self.isCustom = true
-        self.cardCount = collection.itemCount
+        self.difficulty = difficulty
+        self.isCustom = isCustom
+        self.cardCount = cardCount
     }
 }

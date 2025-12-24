@@ -1,6 +1,14 @@
 import Foundation
 
-final class DeckService {
+protocol DeckServiceProtocol {
+    func fetchDecks(
+        from fromLanguageCode: String,
+        to toLanguageCode: String,
+        difficulty: CardDifficulty?
+    ) async throws -> [Deck]
+}
+
+final class DeckService: DeckServiceProtocol {
 
     func fetchDecks(
         from fromLanguageCode: String,
@@ -15,6 +23,7 @@ final class DeckService {
 
         let dtos = try await APIConfig.client.request([WordSetDTO].self, path)
         let pair = LanguagePair(fromCode: fromLanguageCode, toCode: toLanguageCode)
-        return dtos.map { Deck(from: $0, pair: pair) }
+
+        return dtos.map { DeckMapper.map(dto: $0, pair: pair) }
     }
 }

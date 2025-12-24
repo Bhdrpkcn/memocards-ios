@@ -107,7 +107,6 @@ struct StartView: View {
 
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white.opacity(0.7))
     }
 
     // MARK: - Step title/subtitle
@@ -222,7 +221,7 @@ struct StartView: View {
 
                 Text("Tap once to select source and target languages.")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppTheme.Colors.textSecondary.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
 
@@ -282,8 +281,8 @@ struct StartView: View {
                         Text("Reset")
                             .font(.subheadline.weight(.semibold))
                             .frame(width: resetWidth, height: 40)
-                            .background(Color(.systemGray5))
-                            .foregroundColor(.primary)
+                            .background(Color(AppTheme.Colors.disabled))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                             .cornerRadius(12)
                     }
 
@@ -293,8 +292,8 @@ struct StartView: View {
                         Text("OK")
                             .font(.headline)
                             .frame(width: okWidth, height: 40)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
+                            .background(AppTheme.Colors.progress)
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                             .cornerRadius(12)
                     }
                 }

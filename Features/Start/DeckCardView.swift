@@ -13,9 +13,10 @@ struct DeckCardView: View {
             height: height,
             width: width
         ) {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(backgroundColor.gradient)
-                .shadow(radius: 10)
+            RoundedRectangle(cornerRadius: AppTheme.Layout.cardCornerRadius, style: .continuous)
+                .fill(AppTheme.Colors.deckBackground(for: deck).gradient).shadow(
+                    radius: AppTheme.Shadows.card.radius
+                )
         } front: {
             front
         } back: {
@@ -23,23 +24,14 @@ struct DeckCardView: View {
         }
     }
 
-    private var backgroundColor: Color {
-        if deck.isCustom { return .green }
-        switch deck.difficulty {
-        case .easy: return .blue
-        case .medium: return .orange
-        case .hard: return .purple
-        case .none: return .blue
-        }
-    }
-
+    // MARK: - Front View
     private var front: some View {
         VStack(spacing: 10) {
             Spacer()
 
             Text(deck.name)
                 .font(.title3.bold())
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.Colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 18)
 
@@ -48,7 +40,7 @@ struct DeckCardView: View {
             if let desc = deck.description, !desc.isEmpty {
                 Text(desc)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundColor(AppTheme.Colors.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
                     .padding(.horizontal, 18)
@@ -64,24 +56,25 @@ struct DeckCardView: View {
                     Text("Tap for details")
                         .font(.caption)
                 }
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(AppTheme.Colors.textSecondary)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppTheme.Layout.standardPadding)
             .padding(.bottom, 18)
         }
     }
 
+    // MARK: - Back View
     private var back: some View {
         VStack(spacing: 12) {
             Spacer()
 
             Text("Deck details")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(AppTheme.Colors.textSecondary)
 
             Text(deck.name)
                 .font(.title3.bold())
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.Colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 18)
 
@@ -96,23 +89,26 @@ struct DeckCardView: View {
 
                 detailRow(
                     label: "Languages",
-                    value: "\(deck.fromLanguageCode.uppercased()) → \(deck.toLanguageCode.uppercased())"
+                    value:
+                        "\(deck.fromLanguageCode.uppercased()) → \(deck.toLanguageCode.uppercased())"
                 )
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppTheme.Layout.standardPadding)
 
             Spacer()
 
             Divider()
+                .overlay(AppTheme.Colors.textSecondary)
 
             Text("Tap to flip back")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(AppTheme.Colors.textSecondary)
         }
-        .padding(20)
-        .foregroundColor(.white)
+        .padding(AppTheme.Layout.standardPadding)
+        .foregroundColor(AppTheme.Colors.textPrimary)
     }
 
+    // MARK: - Components
     private var chip: some View {
         Group {
             if deck.isCustom {
@@ -129,27 +125,28 @@ struct DeckCardView: View {
         HStack {
             Text(label)
                 .font(.caption.weight(.semibold))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(AppTheme.Colors.textSecondary)
             Spacer()
             Text(value)
                 .font(.caption)
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.Colors.textPrimary)
         }
     }
 }
 
-private extension Text {
-    func chipStyle() -> some View {
+// MARK: - Styles
+extension Text {
+    fileprivate func chipStyle() -> some View {
         self
             .font(.caption.weight(.semibold))
-            .foregroundColor(.white)
-            .padding(.horizontal, 10)
+            .foregroundColor(AppTheme.Colors.textPrimary)
+            .padding(.horizontal, AppTheme.Layout.smallPadding)
             .padding(.vertical, 5)
-            .background(Color.white.opacity(0.18))
+            .background(AppTheme.Colors.cardBackground)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: AppTheme.Layout.chipCornerRadius)
                     .stroke(Color.white.opacity(0.25), lineWidth: 1)
             )
-            .cornerRadius(10)
+            .cornerRadius(AppTheme.Layout.chipCornerRadius)
     }
 }

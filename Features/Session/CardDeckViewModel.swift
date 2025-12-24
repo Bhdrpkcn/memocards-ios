@@ -13,17 +13,17 @@ final class CardDeckViewModel: ObservableObject {
     let deck: Deck
     let filter: CardSessionFilter
 
-    private let cardService: CardService
+    private let cardService: any CardServiceProtocol
+    private let collectionsService: any CollectionsServiceProtocol
     private let progressService: ProgressService
-    private let collectionsService: CollectionsService
     private let userId: Int
 
     init(
         deck: Deck,
         filter: CardSessionFilter,
         userId: Int,
-        cardService: CardService = CardService(),
-        collectionsService: CollectionsService = CollectionsService()
+        cardService: any CardServiceProtocol = CardService(),
+        collectionsService: any CollectionsServiceProtocol = CollectionsService()
     ) {
         self.deck = deck
         self.filter = filter

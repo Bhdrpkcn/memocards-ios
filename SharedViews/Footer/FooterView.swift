@@ -56,8 +56,8 @@ struct FooterView: View {
             }
             .foregroundColor(
                 nav.route == route
-                    ? Color.accentColor
-                    : Color.secondary
+                ? AppTheme.Colors.progress
+                : AppTheme.Colors.disabled
             )
         }
     }

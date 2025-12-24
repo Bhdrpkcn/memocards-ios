@@ -1,14 +1,13 @@
 import Foundation
 import SwiftUI
 
-final class CardService {
+protocol CardServiceProtocol {
+    func fetchCards(deck: Deck, filter: CardSessionFilter, userId: Int) async throws -> [MemoCard]
+}
 
-    func fetchCards(
-        deck: Deck,
-        filter: CardSessionFilter,
-        userId: Int
-    ) async throws -> [MemoCard] {
+final class CardService: CardServiceProtocol {
 
+    func fetchCards(deck: Deck, filter: CardSessionFilter, userId: Int) async throws -> [MemoCard] {
         if deck.isCustom {
             return try await fetchCollectionCards(
                 collectionId: deck.id,
@@ -23,23 +22,23 @@ final class CardService {
                     fromLanguageCode: deck.fromLanguageCode,
                     toLanguageCode: deck.toLanguageCode
                 )
-
             case .known, .review:
-                guard let status = filter.backendStatusParam else {
+                let status = filter.backendStatusParam
+                if let s = status {
+                    return try await fetchWordSetCardsByStatus(
+                        wordSetId: deck.id,
+                        userId: userId,
+                        fromLanguageCode: deck.fromLanguageCode,
+                        toLanguageCode: deck.toLanguageCode,
+                        status: s
+                    )
+                } else {
                     return try await fetchWordSetCardsAll(
                         wordSetId: deck.id,
                         fromLanguageCode: deck.fromLanguageCode,
                         toLanguageCode: deck.toLanguageCode
                     )
                 }
-
-                return try await fetchWordSetCardsByStatus(
-                    wordSetId: deck.id,
-                    userId: userId,
-                    fromLanguageCode: deck.fromLanguageCode,
-                    toLanguageCode: deck.toLanguageCode,
-                    status: status
-                )
             }
         }
     }
@@ -140,7 +139,6 @@ final class CardService {
 
     // MARK: - Color helper
     private func colorForIndex(_ index: Int) -> Color {
-        let palette: [Color] = [.blue, .green, .purple, .orange, .pink]
-        return palette[index % palette.count]
+        return AppTheme.Colors.cardColor(at: index)
     }
 }

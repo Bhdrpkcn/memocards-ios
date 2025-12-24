@@ -69,8 +69,7 @@ struct LanguageSelectionView: View {
         let to = selectedToCode
 
         switch (code == from, code == to) {
-        case (true, true):
-            return .both
+
         case (true, false):
             return .source
         case (false, true):

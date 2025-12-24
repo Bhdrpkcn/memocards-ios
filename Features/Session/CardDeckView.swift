@@ -167,25 +167,37 @@ struct CardDeckView: View {
                 .animation(.spring(), value: dragOffset)
                 .overlay(alignment: .topTrailing) {
                     if dragOffset.width > 0 {
-                        swipeLabel(text: "I understand", color: .green, alignment: .trailing)
-                            .opacity(min(Double(dragOffset.width / 120), 1.0))
-                            .padding(.top, 24)
-                            .padding(.trailing, 24)
+                        swipeLabel(
+                            text: "I understand",
+                            color: AppTheme.Colors.success,
+                            alignment: .trailing
+                        )
+                        .opacity(min(Double(dragOffset.width / 120), 1.0))
+                        .padding(.top, 24)
+                        .padding(.trailing, 24)
                     }
                 }
                 .overlay(alignment: .topLeading) {
                     if dragOffset.width < 0 {
-                        swipeLabel(text: "Review later", color: .red, alignment: .leading)
-                            .opacity(min(Double(-dragOffset.width / 120), 1.0))
-                            .padding(.top, 24)
-                            .padding(.leading, 24)
+                        swipeLabel(
+                            text: "Review later",
+                            color: AppTheme.Colors.error,
+                            alignment: .leading
+                        )
+                        .opacity(min(Double(-dragOffset.width / 120), 1.0))
+                        .padding(.top, 24)
+                        .padding(.leading, 24)
                     }
                 }
                 .overlay(alignment: .bottom) {
                     if dragOffset.height > 0 {
-                        swipeLabel(text: "Save to Deck", color: .blue, alignment: .center)
-                            .opacity(min(Double(dragOffset.height / 120), 1.0))
-                            .padding(.bottom, 24)
+                        swipeLabel(
+                            text: "Save to Deck",
+                            color: AppTheme.Colors.progress,
+                            alignment: .center
+                        )
+                        .opacity(min(Double(dragOffset.height / 120), 1.0))
+                        .padding(.bottom, 24)
                     }
                 }
         }
@@ -266,7 +278,7 @@ struct CardDeckView: View {
     @ViewBuilder
     private func deckChoiceOverlay() -> some View {
         ZStack {
-            Color.black.opacity(0.45)
+            AppTheme.Colors.overlayBackground
                 .ignoresSafeArea()
                 .onTapGesture {
                     cancelDeckChoice()
@@ -278,7 +290,7 @@ struct CardDeckView: View {
                         .font(.headline)
                     Text("Choose how you want to save this card.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppTheme.Colors.textSecondary)
                 }
                 .padding(.bottom, 4)
 
@@ -289,8 +301,8 @@ struct CardDeckView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(vm.customDecks.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
-                        .foregroundColor(.white)
+                        .background(vm.customDecks.isEmpty ? AppTheme.Colors.disabled : AppTheme.Colors.progress)
+                        .foregroundColor(AppTheme.Colors.textPrimary)
                         .cornerRadius(14)
                 }
                 .disabled(vm.customDecks.isEmpty)
@@ -302,8 +314,8 @@ struct CardDeckView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.green)
-                        .foregroundColor(.white)
+                        .background(AppTheme.Colors.success)
+                        .foregroundColor(AppTheme.Colors.textPrimary)
                         .cornerRadius(14)
                 }
 
@@ -315,14 +327,14 @@ struct CardDeckView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white.opacity(0.9))
-                        .foregroundColor(.red)
+                        .foregroundColor(AppTheme.Colors.error)
                         .cornerRadius(14)
                 }
             }
             .padding(24)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
+                    .fill(AppTheme.Colors.screenSecBackground)
             )
             .padding(.horizontal, 32)
         }
@@ -416,9 +428,10 @@ private struct CustomDeckSheet: View {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text(deck.name)
                                                 .font(.headline)
+                                            //TODO: Returning nil
                                             Text("\(String(describing: deck.cardCount)) cards")
                                                 .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .foregroundColor(AppTheme.Colors.textSecondary)
                                         }
                                         Spacer()
                                     }
@@ -458,7 +471,7 @@ private struct CustomDeckSheet: View {
                     if let error = sheetErrorMessage {
                         Section {
                             Text(error)
-                                .foregroundColor(.red)
+                                .foregroundColor(AppTheme.Colors.error)
                         }
                     }
                 }

@@ -30,7 +30,7 @@ struct LanguageChangeSheet: View {
 
                 Text("Tap once to set Source, tap another card to set Target.\nTap again to clear.")
                     .font(.footnote)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppTheme.Colors.textSecondary.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
@@ -72,8 +72,8 @@ struct LanguageChangeSheet: View {
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .frame(height: 42)
-                            .background(Color(.systemGray5))
-                            .foregroundColor(.primary)
+                            .background(AppTheme.Colors.disabled)
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                             .cornerRadius(12)
                     }
 
@@ -91,8 +91,8 @@ struct LanguageChangeSheet: View {
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .frame(height: 42)
-                            .background(canConfirm ? Color.blue : Color.gray)
-                            .foregroundColor(.white)
+                            .background(canConfirm ? AppTheme.Colors.progress : AppTheme.Colors.disabled)
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                             .cornerRadius(12)
                     }
                     .disabled(!canConfirm)
@@ -124,9 +124,7 @@ struct LanguageChangeSheet: View {
     }
 
     private func roleFor(code: String) -> LanguageRole {
-        if code == fromCode && code == toCode {
-            return .both
-        } else if code == fromCode {
+        if code == fromCode {
             return .source
         } else if code == toCode {
             return .target

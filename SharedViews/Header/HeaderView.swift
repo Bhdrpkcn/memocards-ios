@@ -56,7 +56,7 @@ struct HeaderView: View {
 
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppTheme.Colors.textSecondary)
                         }
                     } else {
                         HStack(spacing: 4) {
@@ -64,7 +64,7 @@ struct HeaderView: View {
                                 .font(.headline)
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppTheme.Colors.textSecondary)
                         }
                     }
                 }

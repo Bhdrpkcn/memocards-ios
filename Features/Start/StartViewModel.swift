@@ -31,13 +31,13 @@ final class StartViewModel: ObservableObject {
     @Published var isLoadingLanguages = false
     @Published var errorMessage: String?
 
-    private let deckService: DeckService
-    private let collectionsService: CollectionsService
+    private let deckService: any DeckServiceProtocol
+    private let collectionsService: any CollectionsServiceProtocol
     private let languageService: LanguageService
 
     init(
-        deckService: DeckService = DeckService(),
-        collectionsService: CollectionsService = CollectionsService(),
+        deckService: any DeckServiceProtocol = DeckService(),
+        collectionsService: any CollectionsServiceProtocol = CollectionsService(),
         languageService: LanguageService = LanguageService()
     ) {
         self.deckService = deckService

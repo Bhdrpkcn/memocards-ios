@@ -18,7 +18,6 @@ func languageDisplayName(for code: String) -> String {
 
 // MARK: - Language → Region code mapping for flags
 private let languageToRegionCode: [String: String] = [
-    //TODO: fix american flag to england (en to US changed to "en" : "EN")
     "en": "GB",
     "tr": "TR",
     "fr": "FR",

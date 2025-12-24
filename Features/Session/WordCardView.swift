@@ -11,9 +11,9 @@ struct WordCardView: View {
             isFlipped: $isFlipped,
             height: height
         ) {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Layout.cardCornerRadius, style: .continuous)
                 .fill(card.color.gradient)
-                .shadow(radius: 10)
+                .shadow(radius: AppTheme.Shadows.card.radius)
         } front: {
             frontFace
         } back: {
@@ -27,9 +27,9 @@ struct WordCardView: View {
 
             Text(card.frontText)
                 .font(.title2.weight(.semibold))
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.Colors.textPrimary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppTheme.Layout.standardPadding)
                 .padding(.bottom, 12)
 
             Spacer()
@@ -47,9 +47,9 @@ struct WordCardView: View {
                     Text("Tap to flip")
                         .font(.caption)
                 }
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(AppTheme.Colors.textSecondary)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppTheme.Layout.standardPadding)
             .padding(.bottom, 18)
         }
     }
@@ -60,21 +60,22 @@ struct WordCardView: View {
 
             Text("Answer")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(AppTheme.Colors.textSecondary)
 
             Text(card.backText)
                 .font(.title2.weight(.semibold))
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.Colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 12)
 
             Spacer()
 
             Divider()
+                .overlay(AppTheme.Colors.textSecondary)
 
-            Text("Some gramer text will be wroted here")
+            Text("Some grammar text will be written here")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(AppTheme.Colors.textSecondary)
                 .padding(12)
 
             HStack {
@@ -84,7 +85,7 @@ struct WordCardView: View {
                 Spacer()
             }
         }
-        .padding(20)
+        .padding(AppTheme.Layout.standardPadding)
     }
 
     private func difficultyBadge(_ difficulty: CardDifficulty) -> some View {
@@ -97,10 +98,10 @@ struct WordCardView: View {
 
         return Text(label)
             .font(.caption2.bold())
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Layout.smallPadding)
             .padding(.vertical, 4)
-            .background(Capsule().fill(Color.white.opacity(0.18)))
+            .background(Capsule().fill(AppTheme.Colors.cardBackground))
             .overlay(Capsule().stroke(Color.white.opacity(0.4), lineWidth: 1))
-            .foregroundColor(.white)
+            .foregroundColor(AppTheme.Colors.textPrimary)
     }
 }

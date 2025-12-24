@@ -91,22 +91,20 @@ struct StartView: View {
 
     // MARK: - Main step-based layout
     private var mainStartFlow: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
 
             MascotAnimationView()
                 .frame(height: 220)
                 .padding(.vertical, -20)
 
-            VStack(spacing: 6) {
-                Text(currentTitle)
-                    .font(.title2.bold())
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.horizontal, 24)
+            Text(currentTitle)
+                .font(.title2.bold())
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 4)
 
             stepContent
 
-            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white.opacity(0.7))
@@ -120,7 +118,7 @@ struct StartView: View {
         case .chooseToLanguage:
             return "Which language do you\nwant to learn to?"
         case .chooseContent:
-            return "Select what to learn"
+            return "Select a deck to learn"
         }
     }
 

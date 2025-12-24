@@ -16,173 +16,179 @@ struct DeckSelectionView: View {
     let onStart: () -> Void
     let onChangeLanguages: () -> Void
 
+    // MARK: - UI State
+    private enum DeckSource: String {
+        case premade = "Premade"
+        case user = "User's"
+    }
+
+    @State private var source: DeckSource = .premade
+    @State private var currentIndex: Int = 0
+
+    @State private var isFlipped: Bool = false
+    @State private var dragOffset: CGSize = .zero
+
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 14) {
 
             if isLoading {
                 ProgressView("Loading your decks...")
                     .padding(.top, 8)
             }
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+            sourceSelector
 
-                    if !easyDecks.isEmpty {
-                        deckSection(
-                            title: "Easy Words",
-                            subtitle: "Great for warming up",
-                            decks: easyDecks
-                        )
+            GeometryReader { geo in
+                let cardHeight: CGFloat = 220
+                let cardWidth: CGFloat = min(geo.size.width * 0.75, 300)
+
+                CardStack(
+                    showSecond: secondDeck != nil,
+                    showThird: thirdDeck != nil
+                ) {
+                    if let d = thirdDeck {
+                        DeckCardView(deck: d, isFlipped: .constant(false), height: cardHeight, width: cardWidth)
                     }
-
-                    if !mediumDecks.isEmpty {
-                        deckSection(
-                            title: "Medium Words",
-                            subtitle: "A bit more challenge",
-                            decks: mediumDecks
-                        )
+                } second: {
+                    if let d = secondDeck {
+                        DeckCardView(deck: d, isFlipped: .constant(false), height: cardHeight, width: cardWidth)
                     }
-
-                    if !hardDecks.isEmpty {
-                        deckSection(
-                            title: "Hard Words",
-                            subtitle: "For serious practice",
-                            decks: hardDecks
-                        )
-                    }
-
-                    if !collections.isEmpty {
-                        deckSection(
-                            title: "Your Collections",
-                            subtitle: "Custom decks you saved",
-                            decks: collections,
-                            isCollectionSection: true
-                        )
+                } top: {
+                    if let d = currentDeck {
+                        DeckCardView(deck: d, isFlipped: $isFlipped, height: cardHeight, width: cardWidth)
+                            .offset(dragOffset)
+                            .rotationEffect(.degrees(Double(dragOffset.width / 15)))
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { dragOffset = $0.translation }
+                                    .onEnded { handleDeckDragEnd(translation: $0.translation) }
+                            )
+                            .onTapGesture { withAnimation { isFlipped.toggle() } }
+                            .animation(.spring(), value: dragOffset)
+                    } else {
+                        emptyDeckState
                     }
                 }
-                .padding(.top, 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
+            .frame(height: 220)
 
             if let errorMessage, !errorMessage.isEmpty {
                 Text(errorMessage)
                     .foregroundColor(.red)
             }
 
-            // Filter chips
-            HStack(spacing: 22) {
-                filterItem(icon: "circle.grid.3x3", label: "All", type: .all)
-                filterItem(icon: "checkmark.seal.fill", label: "Known", type: .known)
-                filterItem(icon: "arrow.triangle.2.circlepath", label: "Review", type: .review)
-            }
-            .padding(.top, 8)
+            filterRow
 
-            // Start button
             Button(action: onStart) {
                 Text("Start")
                     .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(.vertical)
+                    .padding(.horizontal, 60)
                     .background(selectedDeck == nil ? Color.gray : Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(14)
-                    .padding(.horizontal, 40)
+                    
             }
             .disabled(selectedDeck == nil)
-            .padding(.bottom, 12)
         }
         .padding(.horizontal, 16)
-    }
-
-    // MARK: - Sections
-
-    @ViewBuilder
-    private func deckSection(
-        title: String,
-        subtitle: String? = nil,
-        decks: [Deck],
-        isCollectionSection: Bool = false
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.headline)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            VStack(spacing: 10) {
-                ForEach(decks, id: \.id) { deck in
-                    deckRow(deck: deck, isCollection: isCollectionSection)
-                }
-            }
+        .padding(.bottom, 12)
+        .onAppear { syncSelection() }
+        .onChange(of: source) {
+            resetBrowseState()
+            syncSelection()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .onChange(of: currentDecks.count) {
+            clampIndexAndSync()
+        }
     }
 
-    @ViewBuilder
-    private func deckRow(deck: Deck, isCollection: Bool) -> some View {
-        let isSelected = selectedDeck == deck
+    // MARK: - Data
 
+    private var allPremadeDecks: [Deck] {
+        easyDecks + mediumDecks + hardDecks
+    }
+
+    private var currentDecks: [Deck] {
+        switch source {
+        case .premade: return allPremadeDecks
+        case .user: return collections
+        }
+    }
+
+    private var currentDeck: Deck? {
+        guard !currentDecks.isEmpty else { return nil }
+        guard currentIndex >= 0, currentIndex < currentDecks.count else { return nil }
+        return currentDecks[currentIndex]
+    }
+
+    private var secondDeck: Deck? {
+        let idx = currentIndex + 1
+        guard idx >= 0, idx < currentDecks.count else { return nil }
+        return currentDecks[idx]
+    }
+
+    private var thirdDeck: Deck? {
+        let idx = currentIndex + 2
+        guard idx >= 0, idx < currentDecks.count else { return nil }
+        return currentDecks[idx]
+    }
+
+    // MARK: - Source selector
+
+    private var sourceSelector: some View {
+        HStack(spacing: 8) {
+            sourceButton(.premade)
+            sourceButton(.user)
+        }
+        .padding(4)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal, 12)
+    }
+
+    private func sourceButton(_ target: DeckSource) -> some View {
         Button {
-            selectedDeck = deck
+            guard source != target else { return }
+            source = target
         } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(deck.name)
-                        .font(.subheadline.weight(.semibold))
-
-                    if isCollection {
-                        if let count = deck.cardCount {
-                            Text("\(count) words")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    } else if let difficulty = deck.difficulty {
-                        Text(difficulty.rawValue.capitalized)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-
-                    if let desc = deck.description, !desc.isEmpty {
-                        Text(desc)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
-                    }
-                }
-
-                Spacer()
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.blue)
-                }
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(
-                        isSelected
-                            ? Color.blue.opacity(0.12)
-                            : Color(.systemGray6)
-                    )
-            )
+            Text(target.rawValue)
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(source == target ? Color.white : Color.clear)
+                .cornerRadius(10)
+                .foregroundColor(source == target ? .black : .secondary)
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Filter chips
+    // MARK: - Empty
 
-    @ViewBuilder
-    private func filterItem(
-        icon: String,
-        label: String,
-        type: CardSessionFilter
-    ) -> some View {
+    private var emptyDeckState: some View {
+        VStack(spacing: 8) {
+            Text("No decks available")
+                .font(.headline)
+            Text("Try switching the source or changing languages.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 20)
+    }
+
+    // MARK: - Filter row
+
+    private var filterRow: some View {
+        HStack(spacing: 22) {
+            filterItem(icon: "circle.grid.3x3", label: "All", type: .all)
+            filterItem(icon: "checkmark.seal.fill", label: "Known", type: .known)
+            filterItem(icon: "arrow.triangle.2.circlepath", label: "Review", type: .review)
+        }
+        .padding(.top, 6)
+    }
+
+    private func filterItem(icon: String, label: String, type: CardSessionFilter) -> some View {
         Button {
             selectedFilter = type
         } label: {
@@ -192,10 +198,96 @@ struct DeckSelectionView: View {
                 Text(label)
                     .font(.caption2)
             }
-            .foregroundColor(
-                selectedFilter == type ? .blue : .gray
-            )
+            .foregroundColor(selectedFilter == type ? .blue : .gray)
             .padding(6)
         }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Browsing swipe (no actions)
+
+    private func handleDeckDragEnd(translation: CGSize) {
+        let threshold: CGFloat = 80
+        let horizontal = translation.width
+
+        if horizontal > threshold {
+            goToPreviousDeck()
+        } else if horizontal < -threshold {
+            goToNextDeck()
+        } else {
+            withAnimation(.spring()) {
+                dragOffset = .zero
+            }
+        }
+    }
+
+    private func goToNextDeck() {
+        guard !currentDecks.isEmpty else { return }
+        let newIndex = min(currentIndex + 1, currentDecks.count - 1)
+        animateToIndex(newIndex, direction: .left)
+    }
+
+    private func goToPreviousDeck() {
+        guard !currentDecks.isEmpty else { return }
+        let newIndex = max(currentIndex - 1, 0)
+        animateToIndex(newIndex, direction: .right)
+    }
+
+    private enum SwipeDirection { case left, right }
+
+    private func animateToIndex(_ index: Int, direction: SwipeDirection) {
+        guard index != currentIndex else {
+            withAnimation(.spring()) { dragOffset = .zero }
+            return
+        }
+
+        // push out
+        withAnimation(.spring()) {
+            dragOffset = CGSize(width: direction == .left ? -420 : 420, height: 0)
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            currentIndex = index
+            isFlipped = false
+            dragOffset = .zero
+            selectedDeck = currentDeck
+        }
+    }
+
+    // MARK: - Sync helpers
+
+    private func resetBrowseState() {
+        currentIndex = 0
+        isFlipped = false
+        dragOffset = .zero
+    }
+
+    private func syncSelection() {
+        guard !currentDecks.isEmpty else {
+            selectedDeck = nil
+            return
+        }
+
+        if let selectedDeck,
+            let idx = currentDecks.firstIndex(of: selectedDeck)
+        {
+            currentIndex = idx
+        } else {
+            currentIndex = 0
+            selectedDeck = currentDeck
+        }
+    }
+
+    private func clampIndexAndSync() {
+        guard !currentDecks.isEmpty else {
+            selectedDeck = nil
+            return
+        }
+
+        if currentIndex >= currentDecks.count {
+            currentIndex = max(0, currentDecks.count - 1)
+        }
+
+        selectedDeck = currentDeck
     }
 }

@@ -31,7 +31,6 @@ struct CardDeckView: View {
             )
         )
     }
-    
 
     var body: some View {
         GeometryReader { geo in
@@ -111,11 +110,12 @@ struct CardDeckView: View {
             }
         }
     }
-    
+
     private var sessionInfoText: String {
         let count = vm.cards.count
 
-        let base = count == 1
+        let base =
+            count == 1
             ? "1 card in this session"
             : "\(count) cards in this session"
 
@@ -129,30 +129,25 @@ struct CardDeckView: View {
         }
     }
 
-
     // MARK: - Card stack
     private func cardStack(topCard: MemoCard, height: CGFloat) -> some View {
-        ZStack {
-            if let second = vm.secondCard {
-                CardView(card: second, isFlipped: false, height: height)
-                    .scaleEffect(0.96)
-                    .offset(y: 14)
-                    .rotationEffect(.degrees(-6))
-                    .opacity(0.9)
-                    .allowsHitTesting(false)
-            }
-
+        CardStack(
+            showSecond: vm.secondCard != nil,
+            showThird: vm.thirdCard != nil
+        ) {
             if let third = vm.thirdCard {
-                CardView(card: third, isFlipped: false, height: height)
-                    .scaleEffect(0.92)
-                    .offset(y: 28)
-                    .rotationEffect(.degrees(6))
-                    .opacity(0.8)
-                    .allowsHitTesting(false)
+                WordCardView(card: third, isFlipped: .constant(false), height: height)
+            } else {
+                EmptyView()
             }
-
-            // TOP interactive card
-            CardView(card: topCard, isFlipped: isFlipped, height: height)
+        } second: {
+            if let second = vm.secondCard {
+                WordCardView(card: second, isFlipped: .constant(false), height: height)
+            } else {
+                EmptyView()
+            }
+        } top: {
+            WordCardView(card: topCard, isFlipped: $isFlipped, height: height)
                 .offset(dragOffset)
                 .rotationEffect(.degrees(Double(dragOffset.width / 15)))
                 .gesture(
@@ -170,8 +165,6 @@ struct CardDeckView: View {
                     }
                 }
                 .animation(.spring(), value: dragOffset)
-
-                // Labels
                 .overlay(alignment: .topTrailing) {
                     if dragOffset.width > 0 {
                         swipeLabel(text: "I understand", color: .green, alignment: .trailing)

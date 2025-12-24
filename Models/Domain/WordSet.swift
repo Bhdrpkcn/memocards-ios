@@ -18,8 +18,8 @@ struct Deck: Identifiable, Equatable, Hashable {
         self.fromLanguageCode = pair.fromCode
         self.toLanguageCode = pair.toCode
         self.difficulty = dto.difficulty
+        self.cardCount = dto.wordCount
         self.isCustom = false
-        self.cardCount = nil
     }
 
     // Collection

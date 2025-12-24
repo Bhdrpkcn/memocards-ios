@@ -5,4 +5,5 @@ struct WordSetDTO: Decodable {
     let name: String
     let description: String?
     let difficulty: CardDifficulty
+    let wordCount: Int?
 }

@@ -33,7 +33,7 @@ struct LottieLoopView: UIViewRepresentable {
         let view = UIView(frame: .zero)
 
         let animationView = LottieAnimationView(name: name)
-        animationView.loopMode = .loop
+        animationView.loopMode = .autoReverse
         animationView.contentMode = .scaleAspectFit
         animationView.play()
 
@@ -52,3 +52,4 @@ struct LottieLoopView: UIViewRepresentable {
 
     func updateUIView(_ uiView: UIView, context: Context) {}
 }
+

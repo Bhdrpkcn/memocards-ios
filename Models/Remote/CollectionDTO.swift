@@ -10,7 +10,7 @@ struct CollectionDTO: Decodable {
     let name: String
     let scope: CollectionScope
     let languageCode: String?
-    let itemCount: Int?
+    let wordCount: Int?
 }
 
 struct CollectionWordsResponseDTO: Decodable {

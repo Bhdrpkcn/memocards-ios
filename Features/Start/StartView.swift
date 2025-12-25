@@ -38,9 +38,15 @@ struct StartView: View {
                         filter: activeFilter,
                         userId: userId
                     )
+                    .id("\(deck.id)-\(activeFilter.rawValue)")
                 } else {
                     mainStartFlow
                         .onAppear(perform: setupOnAppear)
+                        .task {
+                            if languagePair != nil {
+                                await viewModel.loadContentForCurrentPair(userId: userId)
+                            }
+                        }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -70,7 +76,6 @@ struct StartView: View {
 
         viewModel.onLanguageReset = {
             languagePair = nil
-
             if isInSession {
                 onEndSession()
             }
@@ -99,6 +104,7 @@ struct StartView: View {
 
             Text(currentTitle)
                 .font(.title2.bold())
+                .foregroundColor(AppTheme.Colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 4)
@@ -148,22 +154,12 @@ struct StartView: View {
                 if shouldShowLanguageActions {
                     LanguageSelectionActionsView(
                         onReset: {
-                            withAnimation(
-                                .spring(
-                                    response: 0.25,
-                                    dampingFraction: 0.85
-                                )
-                            ) {
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
                                 viewModel.restartFlow()
                             }
                         },
                         onConfirm: {
-                            withAnimation(
-                                .spring(
-                                    response: 0.25,
-                                    dampingFraction: 0.85
-                                )
-                            ) {
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
                                 viewModel.confirmLanguages()
                             }
                         }
@@ -182,6 +178,7 @@ struct StartView: View {
                 isLoading: viewModel.isLoadingContent,
                 selectedDeck: $viewModel.selectedDeck,
                 selectedFilter: $viewModel.selectedFilter,
+                source: $viewModel.selectedDeckSource,
                 onStart: {
                     if let deck = viewModel.selectedDeck {
                         activeFilter = viewModel.selectedFilter
@@ -255,8 +252,14 @@ struct StartView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+
                         viewModel.applyLanguagePair(sheetInitialPair)
+
                         isLanguageSheetPresented = false
+
+                        Task {
+                            await viewModel.loadContentForCurrentPair(userId: userId)
+                        }
                     }
                 }
             }
@@ -281,7 +284,7 @@ struct StartView: View {
                         Text("Reset")
                             .font(.subheadline.weight(.semibold))
                             .frame(width: resetWidth, height: 40)
-                            .background(Color(AppTheme.Colors.disabled))
+                            .background(AppTheme.Colors.disabled)
                             .foregroundColor(AppTheme.Colors.textPrimary)
                             .cornerRadius(12)
                     }

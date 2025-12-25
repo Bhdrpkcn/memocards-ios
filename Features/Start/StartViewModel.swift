@@ -1,7 +1,15 @@
 import Foundation
 
+enum DeckSource: String, CaseIterable {
+    case premade = "Premade"
+    case user = "User's"
+}
+
 @MainActor
 final class StartViewModel: ObservableObject {
+    
+    // MARK: - Persistent UI State
+        @Published var selectedDeckSource: DeckSource = .premade
 
     // MARK: - Callbacks to StartView
     var onLanguagePairConfirmed: ((LanguagePair) -> Void)?
@@ -33,12 +41,12 @@ final class StartViewModel: ObservableObject {
 
     private let deckService: any DeckServiceProtocol
     private let collectionsService: any CollectionsServiceProtocol
-    private let languageService: LanguageService
-
+    private let languageService: any LanguageServiceProtocol
+    
     init(
         deckService: any DeckServiceProtocol = DeckService(),
         collectionsService: any CollectionsServiceProtocol = CollectionsService(),
-        languageService: LanguageService = LanguageService()
+        languageService: any LanguageServiceProtocol = LanguageService()
     ) {
         self.deckService = deckService
         self.collectionsService = collectionsService

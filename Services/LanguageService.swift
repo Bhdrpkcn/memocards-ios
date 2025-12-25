@@ -1,6 +1,10 @@
 import Foundation
 
-struct LanguageService {
+protocol LanguageServiceProtocol {
+    func fetchLanguages() async throws -> [LanguageOption]
+}
+
+final class LanguageService: LanguageServiceProtocol {
 
     func fetchLanguages() async throws -> [LanguageOption] {
         let path = "languages"

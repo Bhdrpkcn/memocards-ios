@@ -15,7 +15,7 @@ final class CardDeckViewModel: ObservableObject {
 
     private let cardService: any CardServiceProtocol
     private let collectionsService: any CollectionsServiceProtocol
-    private let progressService: ProgressService
+    private let progressService: any ProgressServiceProtocol
     private let userId: Int
 
     init(
@@ -23,14 +23,15 @@ final class CardDeckViewModel: ObservableObject {
         filter: CardSessionFilter,
         userId: Int,
         cardService: any CardServiceProtocol = CardService(),
-        collectionsService: any CollectionsServiceProtocol = CollectionsService()
+        collectionsService: any CollectionsServiceProtocol = CollectionsService(),
+        progressService: any ProgressServiceProtocol = ProgressService()
     ) {
         self.deck = deck
         self.filter = filter
         self.userId = userId
         self.cardService = cardService
-        self.progressService = ProgressService(userId: userId)
         self.collectionsService = collectionsService
+        self.progressService = progressService
     }
 
     var topCard: MemoCard? {
@@ -76,7 +77,7 @@ final class CardDeckViewModel: ObservableObject {
 
     // MARK: - Custom decks
     func loadCustomDecksIfNeeded() async {
-        if deck.isCustom { return }
+//        if deck.isCustom { return }
 
         isLoadingCustomDecks = true
         customDeckError = nil
@@ -142,6 +143,7 @@ final class CardDeckViewModel: ObservableObject {
         removeCard(card)
         Task {
             try? await progressService.updateStatus(
+                userId: userId,
                 wordId: card.id,
                 status: .known,
                 fromLanguageCode: deck.fromLanguageCode,
@@ -154,6 +156,7 @@ final class CardDeckViewModel: ObservableObject {
         removeCard(card)
         Task {
             try? await progressService.updateStatus(
+                userId: userId,
                 wordId: card.id,
                 status: .review,
                 fromLanguageCode: deck.fromLanguageCode,

@@ -12,17 +12,11 @@ struct DeckSelectionView: View {
 
     @Binding var selectedDeck: Deck?
     @Binding var selectedFilter: CardSessionFilter
+    @Binding var source: DeckSource
 
     let onStart: () -> Void
     let onChangeLanguages: () -> Void
 
-    // MARK: - UI State
-    private enum DeckSource: String {
-        case premade = "Premade"
-        case user = "User's"
-    }
-
-    @State private var source: DeckSource = .premade
     @State private var currentIndex: Int = 0
 
     @State private var isFlipped: Bool = false
@@ -47,24 +41,39 @@ struct DeckSelectionView: View {
                     showThird: thirdDeck != nil
                 ) {
                     if let d = thirdDeck {
-                        DeckCardView(deck: d, isFlipped: .constant(false), height: cardHeight, width: cardWidth)
+                        DeckCardView(
+                            deck: d,
+                            isFlipped: .constant(false),
+                            height: cardHeight,
+                            width: cardWidth
+                        )
                     }
                 } second: {
                     if let d = secondDeck {
-                        DeckCardView(deck: d, isFlipped: .constant(false), height: cardHeight, width: cardWidth)
+                        DeckCardView(
+                            deck: d,
+                            isFlipped: .constant(false),
+                            height: cardHeight,
+                            width: cardWidth
+                        )
                     }
                 } top: {
                     if let d = currentDeck {
-                        DeckCardView(deck: d, isFlipped: $isFlipped, height: cardHeight, width: cardWidth)
-                            .offset(dragOffset)
-                            .rotationEffect(.degrees(Double(dragOffset.width / 15)))
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { dragOffset = $0.translation }
-                                    .onEnded { handleDeckDragEnd(translation: $0.translation) }
-                            )
-                            .onTapGesture { withAnimation { isFlipped.toggle() } }
-                            .animation(.spring(), value: dragOffset)
+                        DeckCardView(
+                            deck: d,
+                            isFlipped: $isFlipped,
+                            height: cardHeight,
+                            width: cardWidth
+                        )
+                        .offset(dragOffset)
+                        .rotationEffect(.degrees(Double(dragOffset.width / 15)))
+                        .gesture(
+                            DragGesture()
+                                .onChanged { dragOffset = $0.translation }
+                                .onEnded { handleDeckDragEnd(translation: $0.translation) }
+                        )
+                        .onTapGesture { withAnimation { isFlipped.toggle() } }
+                        .animation(.spring(), value: dragOffset)
                     } else {
                         emptyDeckState
                     }
@@ -85,10 +94,12 @@ struct DeckSelectionView: View {
                     .font(.headline)
                     .padding(.vertical)
                     .padding(.horizontal, 60)
-                    .background(selectedDeck == nil ? AppTheme.Colors.disabled : AppTheme.Colors.progress)
+                    .background(
+                        selectedDeck == nil ? AppTheme.Colors.disabled : AppTheme.Colors.progress
+                    )
                     .foregroundColor(AppTheme.Colors.textPrimary)
                     .cornerRadius(14)
-                    
+
             }
             .disabled(selectedDeck == nil)
         }
@@ -198,7 +209,9 @@ struct DeckSelectionView: View {
                 Text(label)
                     .font(.caption2)
             }
-            .foregroundColor(selectedFilter == type ? AppTheme.Colors.progress : AppTheme.Colors.disabled)
+            .foregroundColor(
+                selectedFilter == type ? AppTheme.Colors.progress : AppTheme.Colors.disabled
+            )
             .padding(6)
         }
         .buttonStyle(.plain)

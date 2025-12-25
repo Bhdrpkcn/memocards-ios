@@ -1,12 +1,16 @@
 import Foundation
 
-final class ProgressService {
+protocol ProgressServiceProtocol {
+    func updateStatus(
+        userId: Int,
+        wordId: Int,
+        status: CardStatusKind,
+        fromLanguageCode: String,
+        toLanguageCode: String
+    ) async throws
+}
 
-    private let userId: Int
-
-    init(userId: Int) {
-        self.userId = userId
-    }
+final class ProgressService: ProgressServiceProtocol {
 
     private struct ProgressRequest: Encodable {
         let userId: Int
@@ -16,6 +20,7 @@ final class ProgressService {
     }
 
     func updateStatus(
+        userId: Int,
         wordId: Int,
         status: CardStatusKind,
         fromLanguageCode: String,
@@ -36,4 +41,3 @@ final class ProgressService {
         )
     }
 }
-

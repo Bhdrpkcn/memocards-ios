@@ -66,4 +66,13 @@ enum APIEndpoints {
         "collections/\(collectionId)/words?from=\(from)&to=\(to)"
     }
 
+    static func collectionProgressWords(
+        collectionId: Int,
+        userId: Int,
+        from: String,
+        to: String,
+        status: String
+    ) -> String {
+        "collections/\(collectionId)/words/progress?userId=\(userId)&from=\(from)&to=\(to)&status=\(status)"
+    }
 }

@@ -9,11 +9,25 @@ final class CardService: CardServiceProtocol {
 
     func fetchCards(deck: Deck, filter: CardSessionFilter, userId: Int) async throws -> [MemoCard] {
         if deck.isCustom {
-            return try await fetchCollectionCards(
-                collectionId: deck.id,
-                fromLanguageCode: deck.fromLanguageCode,
-                toLanguageCode: deck.toLanguageCode
-            )
+            switch filter {
+            case .all:
+                return try await fetchCollectionCardsAll(
+                    collectionId: deck.id,
+                    fromLanguageCode: deck.fromLanguageCode,
+                    toLanguageCode: deck.toLanguageCode
+                )
+            case .known, .review:
+                guard let status = filter.backendStatusParam else {
+                    return []
+                }
+                return try await fetchCollectionCardsByStatus(
+                    collectionId: deck.id,
+                    userId: userId,
+                    fromLanguageCode: deck.fromLanguageCode,
+                    toLanguageCode: deck.toLanguageCode,
+                    status: status
+                )
+            }
         } else {
             switch filter {
             case .all:
@@ -108,23 +122,17 @@ final class CardService: CardServiceProtocol {
     }
 
     // MARK: - Collections: words in a custom collection
-    private func fetchCollectionCards(
+    private func fetchCollectionCardsAll(
         collectionId: Int,
         fromLanguageCode: String,
         toLanguageCode: String
     ) async throws -> [MemoCard] {
-
         let path = APIEndpoints.collectionWords(
             collectionId: collectionId,
             from: fromLanguageCode,
             to: toLanguageCode
         )
-
-        let dto = try await APIConfig.client.request(
-            CollectionWordsResponseDTO.self,
-            path
-        )
-
+        let dto = try await APIConfig.client.request(CollectionWordsResponseDTO.self, path)
         return dto.words.enumerated().map { index, w in
             MemoCard(
                 id: w.wordId,
@@ -137,6 +145,34 @@ final class CardService: CardServiceProtocol {
         }
     }
 
+    private func fetchCollectionCardsByStatus(
+        collectionId: Int,
+        userId: Int,
+        fromLanguageCode: String,
+        toLanguageCode: String,
+        status: String
+    ) async throws -> [MemoCard] {
+        let path = APIEndpoints.collectionProgressWords(
+            collectionId: collectionId,
+            userId: userId,
+            from: fromLanguageCode,
+            to: toLanguageCode,
+            status: status
+        )
+
+        let dto = try await APIConfig.client.request(CollectionWordsResponseDTO.self, path)
+
+        return dto.words.enumerated().map { index, w in
+            MemoCard(
+                id: w.wordId,
+                frontText: w.front,
+                backText: w.back,
+                difficulty: nil,
+                orderIndex: index,
+                color: colorForIndex(index)
+            )
+        }
+    }
     // MARK: - Color helper
     private func colorForIndex(_ index: Int) -> Color {
         return AppTheme.Colors.cardColor(at: index)

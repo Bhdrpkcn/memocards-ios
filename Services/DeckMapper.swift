@@ -28,7 +28,7 @@ struct DeckMapper {
             toLanguageCode: toLanguageCode,
             difficulty: nil,
             isCustom: true,
-            cardCount: dto.itemCount
+            cardCount: dto.wordCount
         )
     }
 }
